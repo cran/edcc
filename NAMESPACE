@@ -1,0 +1,6 @@
+export(ecoCusum)
+export(ecoEwma)
+export(ecoXbar)
+S3method(contour,edcc)
+S3method(print,edcc)
+S3method(summary,edcc)
