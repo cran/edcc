@@ -7,8 +7,8 @@
 \arguments{
   \item{x}{an object of "edcc" class}
 
-  \item{...}{arguments to be passed to contour plot, not
-  supported now}
+  \item{...}{arguments to be passed to contour plot, see
+  \code{\link[graphics]{contour}} for details}
 }
 \value{
   a contour plot
@@ -17,10 +17,14 @@
   contour plot of "edcc" class
 }
 \details{
-  contour plot for "edcc" class object
+  S3 method of contour plot for "edcc" class object
 }
 \examples{
-z=ecoXbar(P0=100,P1=0,nlevels=50)
-contour(z)
+x <- ecoXbar(h=seq(0.7,0.9,by=.01),L=seq(2.8,3.3,by=.01),n=4:6,P0=110,
+P1=10,nlevels=50,contour.plot=TRUE)
+contour(x,nlevels=20,lty=2,col=2,call.print=FALSE)
+}
+\seealso{
+  \code{\link[graphics]{contour}}
 }
 
