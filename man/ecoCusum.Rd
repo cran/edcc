@@ -57,7 +57,7 @@
   \item{Tc}{expected time to discover the assignable
   cause.}
 
-  \item{Tf}{expected search time when false alarm occures.}
+  \item{Tf}{expected search time when false alarm occurs.}
 
   \item{Tr}{expected time to repair the process.}
 
@@ -87,7 +87,7 @@
   contour plot should be drawn. Default is FALSE.}
 
   \item{call.print}{a logical value indicating whether the
-  "call" should be drawn on the contour plot. Default is
+  "call" should be printed on the contour plot. Default is
   TRUE}
 
   \item{...}{other arguments to be passed to \code{optim}
@@ -100,7 +100,7 @@
 \description{
   Calculate the optimum parameters of n(sample size),
   h(sampling interval), k(reference value) and H(decision
-  interval) for Econimic Design of Cusum control chart. For
+  interval) for Economic Design of Cusum control chart. For
   more information about the reference value see 'Details'.
 }
 \details{
@@ -132,6 +132,9 @@
   parameters P0, P1 and C0, C1, only one pair is needed. If
   P0 and P1 are given, they will be used first, else C0 and
   C1 will be used.
+
+  \code{echCusum} is used to calculate the ECH (Expected
+  Cost per Hour) for a given design point
 }
 \examples{
 #Chiu, W.K. (1974). Applied Statistics, 23, p427 Table3, row 1-2,14

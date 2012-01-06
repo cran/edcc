@@ -1,7 +1,7 @@
 \name{ecoXbar}
 \alias{echXbar}
 \alias{ecoXbar}
-\title{Economic design for X-bar chart}
+\title{Economic design for X-bar control chart}
 \usage{
   ecoXbar(h, L, n, lambda = 0.05, delta = 2, P0 = NULL,
     P1 = NULL, C0 = NULL, C1 = NULL, Cr = 25, Cf = 50,
@@ -57,7 +57,7 @@
   \item{Tc}{expected time to discover the assignable
   cause.}
 
-  \item{Tf}{expected search time when false alarm occures.}
+  \item{Tf}{expected search time when false alarm occurs.}
 
   \item{Tr}{expected time to repair the process.}
 
@@ -84,7 +84,7 @@
   works when the parameters h, L and n are all specified.}
 
   \item{call.print}{a logical value indicating whether the
-  "call" should be drawn on the contour plot. Default is
+  "call" should be printed on the contour plot. Default is
   TRUE}
 
   \item{...}{other arguments to be passed to \code{optim}
@@ -97,7 +97,7 @@
 \description{
   Calculate the optimum parameters, n(sample size),
   h(sampling interval) and L(number of s.d. from control
-  limits to center line) for Econimic Design of X-bar
+  limits to center line) for Economic Design of X-bar
   control chart .
 }
 \details{
@@ -128,6 +128,9 @@
   difference between C0 and C1 keeps the same, the optimum
   parameters are identical but the ECH(Expected Cost per
   Hour) values will change.
+
+  \code{echXbar} is used to calculate the ECH (Expected
+  Cost per Hour) for a given design point
 }
 \examples{
 # Douglas (2009). Statistical quality control: a modern introduction, sixth edition, p470.

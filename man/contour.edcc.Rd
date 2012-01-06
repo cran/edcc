@@ -1,11 +1,15 @@
 \name{contour.edcc}
 \alias{contour.edcc}
-\title{contour plot of "edcc" class}
+\title{Contour plot of "edcc" class}
 \usage{
-  \method{contour}{edcc} (x, ...)
+  \method{contour}{edcc} (x, call.print = TRUE, ...)
 }
 \arguments{
   \item{x}{an object of "edcc" class}
+
+  \item{call.print}{a logical value indicating whether the
+  "call" should be printed on the contour plot. Default is
+  TRUE}
 
   \item{...}{arguments to be passed to contour plot, see
   \code{\link[graphics]{contour}} for details}

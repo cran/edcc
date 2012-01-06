@@ -1,14 +1,17 @@
 \name{update.edcc}
 \alias{update.edcc}
-\title{update for "edcc" class object}
+\title{Update for a "edcc" class object}
 \usage{
-  \method{update}{edcc} (object, ...)
+  \method{update}{edcc} (object, ..., evaluate = TRUE)
 }
 \arguments{
   \item{object}{an object of "edcc" class}
 
   \item{...}{additional arguments to the call, or arguments
-  with changed values.}
+  with anged values.}
+
+  \item{evaluate}{If true evaluate the new call else return
+  the call.}
 }
 \value{
   the fitted object

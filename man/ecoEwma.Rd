@@ -62,7 +62,7 @@
   \item{Tc}{expected time to discover the assignable
   cause.}
 
-  \item{Tf}{expected search time when false alarm occures.}
+  \item{Tf}{expected search time when false alarm occurs.}
 
   \item{Tr}{expected time to repair the process.}
 
@@ -92,7 +92,7 @@
   contour plot should be drawn. Default is FALSE.}
 
   \item{call.print}{a logical value indicating whether the
-  "call" should be drawn on the contour plot. Default is
+  "call" should be printed on the contour plot. Default is
   TRUE}
 
   \item{...}{other arguments to be passed to contour
@@ -106,7 +106,7 @@
   Calculate the optimum parameters, n(sample size),
   h(sampling interval), w(weight to the present sample) and
   k(number of s.d. from control limits to center line) for
-  econimic Design of EWMA control chart .
+  economic Design of EWMA control chart .
 }
 \details{
   Parameter \code{w} should always be given, because the
@@ -134,6 +134,9 @@
   For cost parameters P0, P1 and C0, C1, only one pair is
   needed. If P0 and P1 are given, they will be used first,
   else C0 and C1 will be used.
+
+  \code{echEwma} is used to calculate the ECH (Expected
+  Cost per Hour) for a given design point
 }
 \examples{
 #Douglas (2009). Statistical quality control: a modern introduction, sixth edition, p470.
@@ -141,7 +144,7 @@
 y <- list()
 w <- seq(0.1,0.9,by=0.1)
 for(i in 1:length(w))
-y[[i]] <- ecoEwma(w=w[i],P0=110,P1=10,Cf=50,contour.plot=TRUE)$optimum
+y[[i]] <- ecoEwma(w=w[i],P0=110,P1=10,Cf=50)$optimum
 y <- do.call("rbind",y)
 #yy = ecoEwma( h=seq(.7,1,by=.01), w=seq(0.8,1,by=.01),k=seq(2.9,3.3,by=0.01),n=4:5,P0=110,P1=10,Cf=50,contour.plot=TRUE)
 ##$optimum

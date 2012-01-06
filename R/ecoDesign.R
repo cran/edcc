@@ -1,6 +1,6 @@
 ##' Calculate the optimum parameters, n(sample size), h(sampling
 ##' interval) and L(number of s.d. from control limits to center line)
-##' for Econimic Design of X-bar control chart .
+##' for Economic Design of X-bar control chart .
 ##'
 ##' When parameters \code{h}, \code{L}, \code{n} are all undefined,
 ##' \code{ecoXbar} function will try to find the global optimum point
@@ -25,8 +25,11 @@
 ##' identical. If the difference between C0 and C1 keeps the same, the
 ##' optimum parameters are identical but the ECH(Expected Cost per
 ##' Hour) values will change.
+##'
+##' \code{echXbar} is used to calculate the ECH (Expected Cost per
+##' Hour) for a given design point
 ##' 
-##' @title Economic design for X-bar chart
+##' @title Economic design for X-bar control chart
 ##' @param h sampling interval. It can be a numeric vector or left
 ##' undefined. See 'Details'
 ##' @param L number of standard deviations from control limits to
@@ -54,7 +57,7 @@
 ##' search.
 ##' @param T0 time to sample and chart one item.
 ##' @param Tc expected time to discover the assignable cause.
-##' @param Tf expected search time when false alarm occures.
+##' @param Tf expected search time when false alarm occurs.
 ##' @param Tr expected time to repair the process.
 ##' @param a fixed cost per sample.
 ##' @param b cost per unit sampled.
@@ -70,7 +73,7 @@
 ##' plot should be drawn. Default is FALSE. Only works when the
 ##' parameters h, L and n are all specified.
 ##' @param call.print a logical value indicating whether the "call"
-##' should be drawn on the contour plot. Default is TRUE
+##' should be printed on the contour plot. Default is TRUE
 ##' @param ... other arguments to be passed to \code{optim} function.
 ##' @return return the optimum parameters and the corresponding
 ##' ECH(Expected Cost per Hour) value
@@ -212,7 +215,7 @@ echXbar <- function(h,L,n,lambda=.05,delta=2,P0=NULL,P1=NULL,C0=NULL,C1=NULL,Cr=
 
 ##' Calculate the optimum parameters of n(sample size), h(sampling
 ##' interval), k(reference value) and H(decision interval) for
-##' Econimic Design of Cusum control chart. For more information about
+##' Economic Design of Cusum control chart. For more information about
 ##' the reference value see 'Details'.
 ##'
 ##' When parameters \code{h}, \code{H}, \code{n} are all undefined,
@@ -239,6 +242,9 @@ echXbar <- function(h,L,n,lambda=.05,delta=2,P0=NULL,P1=NULL,C0=NULL,C1=NULL,Cr=
 ##' For cost parameters P0, P1 and C0, C1, only one pair is needed.
 ##' If P0 and P1 are given, they will be used first, else C0 and C1
 ##' will be used.
+##'
+##' \code{echCusum} is used to calculate the ECH (Expected Cost per
+##' Hour) for a given design point
 ##' 
 ##' @title Economic design for Cusum control chart
 ##' @param h sampling interval. It can be a numeric vector or left
@@ -267,7 +273,7 @@ echXbar <- function(h,L,n,lambda=.05,delta=2,P0=NULL,P1=NULL,C0=NULL,C1=NULL,Cr=
 ##' search.
 ##' @param T0 time to sample and chart one item.
 ##' @param Tc expected time to discover the assignable cause.
-##' @param Tf expected search time when false alarm occures.
+##' @param Tf expected search time when false alarm occurs.
 ##' @param Tr expected time to repair the process.
 ##' @param a fixed cost per sample.
 ##' @param b cost per unit sampled.
@@ -285,7 +291,7 @@ echXbar <- function(h,L,n,lambda=.05,delta=2,P0=NULL,P1=NULL,C0=NULL,C1=NULL,Cr=
 ##' @param contour.plot a logical value indicating wether a contour
 ##' plot should be drawn. Default is FALSE.
 ##' @param call.print a logical value indicating whether the "call"
-##' should be drawn on the contour plot. Default is TRUE
+##' should be printed on the contour plot. Default is TRUE
 ##' @param ... other arguments to be passed to \code{optim} function..
 ##' @return return the optimum parameters and the corresponding
 ##' ECH(Expected Cost per Hour) value.
@@ -431,7 +437,7 @@ echCusum <- function(h,H,n,delta = 2,lambda = .01, P0 = NULL, P1 = NULL,C0 = NUL
 
 ##' Calculate the optimum parameters, n(sample size), h(sampling
 ##' interval), w(weight to the present sample) and k(number of
-##' s.d. from control limits to center line) for econimic Design of
+##' s.d. from control limits to center line) for economic Design of
 ##' EWMA control chart .
 ##' 
 ##' Parameter \code{w} should always be given, because the range of
@@ -455,6 +461,10 @@ echCusum <- function(h,H,n,delta = 2,lambda = .01, P0 = NULL, P1 = NULL,C0 = NUL
 ##' For cost parameters P0, P1 and C0, C1, only one pair is needed.
 ##' If P0 and P1 are given, they will be used first, else C0 and C1
 ##' will be used.
+##'
+##' \code{echEwma} is used to calculate the ECH (Expected Cost per
+##' Hour) for a given design point
+##' 
 ##' @title Economic design for EWMA control chart
 ##' @param h sampling interval. It can be a numeric vector or left
 ##' undefined. See 'Details'
@@ -484,7 +494,7 @@ echCusum <- function(h,H,n,delta = 2,lambda = .01, P0 = NULL, P1 = NULL,C0 = NUL
 ##' search.
 ##' @param T0 time to sample and chart one item. 
 ##' @param Tc expected time to discover the assignable cause.
-##' @param Tf expected search time when false alarm occures. 
+##' @param Tf expected search time when false alarm occurs. 
 ##' @param Tr expected time to repair the process.
 ##' @param a fixed cost per sample.
 ##' @param b cost per unit sampled.
@@ -502,7 +512,7 @@ echCusum <- function(h,H,n,delta = 2,lambda = .01, P0 = NULL, P1 = NULL,C0 = NUL
 ##' @param contour.plot a logical value indicating whether a contour
 ##' plot should be drawn. Default is FALSE.
 ##' @param call.print a logical value indicating whether the "call"
-##' should be drawn on the contour plot. Default is TRUE
+##' should be printed on the contour plot. Default is TRUE
 ##' @param ... other arguments to be passed to contour function.
 ##' @return return the optimum parameters and the corresponding cost
 ##' value
@@ -515,7 +525,7 @@ echCusum <- function(h,H,n,delta = 2,lambda = .01, P0 = NULL, P1 = NULL,C0 = NUL
 ##' y <- list()
 ##' w <- seq(0.1,0.9,by=0.1)
 ##' for(i in 1:length(w))
-##' y[[i]] <- ecoEwma(w=w[i],P0=110,P1=10,Cf=50,contour.plot=TRUE)$optimum
+##' y[[i]] <- ecoEwma(w=w[i],P0=110,P1=10,Cf=50)$optimum
 ##' y <- do.call("rbind",y)
 ##' #yy = ecoEwma( h=seq(.7,1,by=.01), w=seq(0.8,1,by=.01),k=seq(2.9,3.3,by=0.01),n=4:5,P0=110,P1=10,Cf=50,contour.plot=TRUE)
 ##' ##$optimum
@@ -670,26 +680,42 @@ print.edcc <- function(x,...){
 ##' call and (by default) evaluating that call. 
 ##'
 ##' S3 method for update.
-##' @title update for "edcc" class object
+##' @title Update for a "edcc" class object
 ##' @param object an object of "edcc" class
 ##' @param ... additional arguments to the call, or arguments with
-##' changed values.
+##'anged values.
+##' @param evaluate If true evaluate the new call else return the
+##' call.
 ##' @return the fitted object
 ##' @S3method update edcc
 ##' @method update edcc
 ##' @examples x <- ecoXbar(P0=110,P1=10)
 ##' update(x,P0=NULL,P1=NULL,C0=10,C1=110)
-update.edcc <- function(object,...){
-  update.default(object,...)
+update.edcc <- function(object,...,evaluate=TRUE){
+    if (is.null(call <- object$call)) 
+        stop("need an object with call component")
+    extras <- match.call(expand.dots = FALSE)$...
+    if (length(extras)) {
+        existing <- !is.na(match(names(extras), names(call)))
+        for (a in names(extras)[existing]) call[[a]] <- extras[[a]]
+        if (any(!existing)) {
+            call <- c(as.list(call), extras[!existing])
+            call <- as.call(call)
+        }
+    }
+    if (evaluate) 
+        eval(call, parent.frame())
+    else call
 }
-
 
 
 ##' contour plot of "edcc" class
 ##'
 ##' S3 method of contour plot for "edcc" class object
-##' @title contour plot of "edcc" class
+##' @title Contour plot of "edcc" class
 ##' @param x an object of "edcc" class
+##' @param call.print a logical value indicating whether the "call"
+##' should be printed on the contour plot. Default is TRUE
 ##' @param ... arguments to be passed to contour plot, see \code{\link[graphics]{contour}} for details
 ##' @return a contour plot
 ##' @S3method contour edcc
@@ -699,8 +725,8 @@ update.edcc <- function(object,...){
 ##' x <- ecoXbar(h=seq(0.7,0.9,by=.01),L=seq(2.8,3.3,by=.01),n=4:6,P0=110,
 ##' P1=10,nlevels=50,contour.plot=TRUE)
 ##' contour(x,nlevels=20,lty=2,col=2,call.print=FALSE)
-contour.edcc <- function(x,...){
-  if (is.null(call <- getCall(x))) 
+contour.edcc <- function(x,call.print=TRUE,...){
+  if (is.null(call <- x$call)) 
     stop("need an object with call component")
   extras <- match.call(expand.dots = FALSE)$...
   if(call[[1]]==quote(ecoXbar)){
@@ -708,12 +734,7 @@ contour.edcc <- function(x,...){
     L <- call[["L"]]
     nlevels <- call[["nlevels"]]
     if(is.null(nlevels)) nlevels <- 30
-    call.print <- call[["call.print"]]
-    if(is.null(call.print)) call.print <- TRUE
-    if(!is.null(extras[["call.print"]])){
-      call.print <- extras[["call.print"]]
-      extras[["call.print"]] <- NULL
-    }
+    if(missing(call.print)) call.print <- TRUE
     opt.mat <- x$opt.mat
     call1 <- list(quote(contour.default),h,L,quote(opt.mat),nlevels=nlevels,xlab="h",ylab="L")
     if (length(extras)) {
@@ -742,12 +763,7 @@ contour.edcc <- function(x,...){
       H <- call[["H"]]
       nlevels <- call[["nlevels"]]
       if(is.null(nlevels)) nlevels <- 30
-      call.print <- call[["call.print"]]
-      if(is.null(call.print)) call.print <- TRUE
-      if(!is.null(extras[["call.print"]])){
-        call.print <- extras[["call.print"]]
-        extras[["call.print"]] <- NULL
-      }
+      if(missing(call.print)) call.print <- TRUE
       opt.mat <- x$opt.mat
       call1 <- list(quote(contour.default),h,H,quote(opt.mat),nlevels=nlevels,xlab="h",ylab="H")
       if (length(extras)) {
@@ -777,12 +793,7 @@ contour.edcc <- function(x,...){
     k <- call[["k"]]
     nlevels <- call[["nlevels"]]
     if(is.null(nlevels)) nlevels <- 30
-    call.print <- call[["call.print"]]
-    if(is.null(call.print)) call.print <- TRUE
-    if(!is.null(extras[["call.print"]])){
-      call.print <- extras[["call.print"]]
-      extras[["call.print"]] <- NULL
-    }
+    if(missing(call.print)) call.print <- TRUE
     opt.mat <- x$opt.mat
     call1 <- list(quote(contour.default),h,k,quote(opt.mat$mat.hk),nlevels=nlevels,xlab="h",ylab="k")
     call2 <- list(quote(contour.default),h,w,quote(opt.mat$mat.hw),nlevels=nlevels,xlab="h",ylab="w")
