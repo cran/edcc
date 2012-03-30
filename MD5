@@ -1,10 +1,10 @@
-af4eda24f8092a436e18aee3efa7df2d *DESCRIPTION
+19e91369a0101ab9962faf1b8b8e933a *DESCRIPTION
 b6ba627603f170ea3c63e0698bbbb193 *NAMESPACE
-21e963f0e1f6b31d7701579b2961a8f7 *R/ecoDesign.R
-0d8f262cf1a68f7874ba6157fb571f1d *R/internal.R
-2014f622dabfd12534fe4958240898bc *man/contour.edcc.Rd
-139a1f99461f4b747a10bc2f8580c6af *man/ecoCusum.Rd
-26b442eb95850e6f35fe22c1014316e2 *man/ecoEwma.Rd
-9958b4ab84ced0484ea26f4e9ff13449 *man/ecoXbar.Rd
+327c4b0113cd72ca2e224d97af038f20 *R/ecoDesign.R
+1eee3df3bc78a758496128219b3027f5 *R/internal.R
+7020f278341721b0e0b7d5e650117eb0 *man/contour.edcc.Rd
+4b4d6f7873312d6b8b31a7b58f5f808c *man/ecoCusum.Rd
+b701b47ec53d108be27693a6182377b0 *man/ecoEwma.Rd
+979df3245605b6be40448851e65ce822 *man/ecoXbar.Rd
 793b4113c8cc878317e7c39ce5377248 *man/print.edcc.Rd
 dce8db11c166eaf4f339fd6031295648 *man/update.edcc.Rd

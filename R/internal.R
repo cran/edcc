@@ -1,4 +1,3 @@
-
   .echXbar1 <- function(x,lambda=.05,delta=2,P0=NULL,P1=NULL,C0=NULL,C1=NULL,Cr=25,Cf=50,T0=0.0167,Tc=1,Tf=0,Tr=0,a=1,b=.1,d1=1,d2=1){
     h <- x[1]; L <- x[2]; n <- x[3]
     alpha <- 2*pnorm(-L)
@@ -6,7 +5,7 @@
     ARL1 <- 1/alpha
     ARL2 <- 1/(1-beta)
     tau <- (1-(1+lambda*h)*exp(-lambda*h))/(lambda*(1-exp(-lambda*h)))
-    s <- exp(-lambda*h)/(1-exp(-lambda*h))
+    s <- 1/(exp(lambda*h)-1)
     if(!is.null(P0)&!is.null(P1)){
       ECT <- 1/lambda+(1-d1)*s*Tf/ARL1 - tau + n*T0 + h*ARL2 + Tc + Tr
       ECP <- P0/lambda + P1*(-tau+n*T0+h*ARL2+d1*Tc+d2*Tr) - s*Cf/ARL1 - Cr - (a+b*n)*(1/lambda-tau+n*T0+h*ARL2+d1*Tc+d2*Tr)/h
@@ -27,7 +26,7 @@
     ARL1 <- 1/alpha
     ARL2 <- 1/(1-beta)
     tau <- (1-(1+lambda*h)*exp(-lambda*h))/(lambda*(1-exp(-lambda*h)))
-    s <- exp(-lambda*h)/(1-exp(-lambda*h))
+    s <- 1/(exp(lambda*h)-1)
     if(!is.null(P0)&!is.null(P1)){
       ECT <- 1/lambda+(1-d1)*s*Tf/ARL1 - tau + n*T0 + h*ARL2 + Tc + Tr
       ECP <- P0/lambda + P1*(-tau+n*T0+h*ARL2+d1*Tc+d2*Tr) - s*Cf/ARL1 - Cr - (a+b*n)*(1/lambda-tau+n*T0+h*ARL2+d1*Tc+d2*Tr)/h
@@ -48,7 +47,7 @@
     ARL1 <- as.numeric(xcusum.arl(k,H,0,sided=sided))
     ARL2 <- as.numeric(xcusum.arl(k,H,delta.std,sided=sided))
     tau <- (1-(1+lambda*h)*exp(-lambda*h))/(lambda*(1-exp(-lambda*h)))
-    s <- exp(-lambda*h)/(1-exp(-lambda*h))
+    s <- 1/(exp(lambda*h)-1)
     if(!is.null(P0)&!is.null(P1)){
       ECT <- 1/lambda+(1-d1)*s*Tf/ARL1 - tau + n*T0 + h*ARL2 + Tc + Tr
       ECP <- P0/lambda + P1*(-tau+n*T0+h*ARL2+d1*Tc+d2*Tr) - s*Cf/ARL1 - Cr - (a+b*n)*(1/lambda-tau+n*T0+h*ARL2+d1*Tc+d2*Tr)/h
@@ -70,7 +69,7 @@
     ARL1 <- as.numeric(xcusum.arl(k,H,0,sided=sided))
     ARL2 <- as.numeric(xcusum.arl(k,H,delta.std,sided=sided))
     tau <- (1-(1+lambda*h)*exp(-lambda*h))/(lambda*(1-exp(-lambda*h)))
-    s <- exp(-lambda*h)/(1-exp(-lambda*h))
+    s <- 1/(exp(lambda*h)-1)
     if(!is.null(P0)&!is.null(P1)){
       ECT <- 1/lambda+(1-d1)*s*Tf/ARL1 - tau + n*T0 + h*ARL2 + Tc + Tr
       ECP <- P0/lambda + P1*(-tau+n*T0+h*ARL2+d1*Tc+d2*Tr) - s*Cf/ARL1 - Cr - (a+b*n)*(1/lambda-tau+n*T0+h*ARL2+d1*Tc+d2*Tr)/h
@@ -91,7 +90,7 @@
      ARL1 <- as.numeric(xewma.arl(w,k,0,sided=sided))
      ARL2 <- as.numeric(xewma.arl(w,k,delta.std,sided=sided))
      tau <- (1-(1+lambda*h)*exp(-lambda*h))/(lambda*(1-exp(-lambda*h)))
-     s <- exp(-lambda*h)/(1-exp(-lambda*h))
+     s <- 1/(exp(lambda*h)-1)
      if(!is.null(P0)&!is.null(P1)){
        ECT <- 1/lambda+(1-d1)*s*Tf/ARL1 - tau + n*T0 + h*ARL2 + Tc + Tr
        ECP <- P0/lambda + P1*(-tau+n*T0+h*ARL2+d1*Tc+d2*Tr) - s*Cf/ARL1 - Cr - (a+b*n)*(1/lambda-tau+n*T0+h*ARL2+d1*Tc+d2*Tr)/h
@@ -111,7 +110,7 @@
      ARL1 <- as.numeric(xewma.arl(w,k,0,sided=sided))
      ARL2 <- as.numeric(xewma.arl(w,k,delta.std,sided=sided))
      tau <- (1-(1+lambda*h)*exp(-lambda*h))/(lambda*(1-exp(-lambda*h)))
-     s <- exp(-lambda*h)/(1-exp(-lambda*h))
+     s <- 1/(exp(lambda*h)-1)
      if(!is.null(P0)&!is.null(P1)){
        ECT <- 1/lambda+(1-d1)*s*Tf/ARL1 - tau + n*T0 + h*ARL2 + Tc + Tr
        ECP <- P0/lambda + P1*(-tau+n*T0+h*ARL2+d1*Tc+d2*Tr) - s*Cf/ARL1 - Cr - (a+b*n)*(1/lambda-tau+n*T0+h*ARL2+d1*Tc+d2*Tr)/h

@@ -25,9 +25,11 @@
   \item{n}{sample size. It can be an integer vector or left
   undefined. See 'Details'}
 
-  \item{delta}{critical value: the extent of the shift when
-  assignable cause occurs. delta = |(mu1 - mu0)/sigma|.
-  Default value is 2.}
+  \item{delta}{shift in process mean in standard deviation
+  units when assignable cause occurs (delta = |mu1 -
+  mu0|/sigma), where sigma is the standard deviation of
+  observations; mu0 is the in-control process mean; mu1 is
+  the out-of-control process mean. Default value is 2.}
 
   \item{lambda}{we assume the in-control time follows a
   exponential distribution with mean 1/lambda. Default
@@ -94,8 +96,21 @@
   function..}
 }
 \value{
-  return the optimum parameters and the corresponding
-  ECH(Expected Cost per Hour) value.
+  The function returns a list of elements \code{optimum},
+  \code{cost.frame}, \code{FAR} and \code{ATS}.
+  \code{optimum} is a vector with the optimum parameters
+  and the corresponding ECH value; \code{cost.frame} is a
+  dataframe with the optimum parameters and the
+  corresponding ECH values for all given \code{n}(if
+  \code{n} is not specified, \code{cost.frame} won't be
+  returned); \code{FAR} indicates the false alarm rate
+  during the in-control time, which is calculated as
+  lambda*(average number of false alarm); \code{ATS}
+  indicates the average time to signal after the occurrence
+  of an assignable cause, calculated as h*ARL2 - tau, where
+  tau is the expected time of occurrence of the assignable
+  cause given it occurs between the i-th and (i+1)st
+  samples
 }
 \description{
   Calculate the optimum parameters of n(sample size),
@@ -104,6 +119,14 @@
   more information about the reference value see 'Details'.
 }
 \details{
+  When parameter \code{par} is specified, optimization
+  algorithms would be used as default. \code{par} can be
+  specified as: \code{par = c(h, H)} where \code{h} and
+  \code{H} are the initial values of smapling interval and
+  decision interval when \code{n} is specified; or
+  \code{par = c(h, H, n)}. Good inital values may lead to
+  good optimum results.
+
   When parameters \code{h}, \code{H}, \code{n} are all
   undefined, \code{ecoCusum} function will try to find the
   global optimum point to minimize the ECH (Expected Cost
@@ -116,10 +139,10 @@
   function will try to find the optimum point for each
   \code{n} value using optimization algorithms. When
   \code{h}, \code{H} and \code{n} are all given,
-  \code{ecoCusum} function will use a "robust" way to
+  \code{ecoCusum} function will use a "grid method" way to
   calculate the optimum point, that is ECH for all the
   combinations of the parameters will be calculated. The
-  "robust" way is much slower than using optimization
+  "grid method" way is much slower than using optimization
   algorithms, but it would be a good choice when
   optimization algorithms fail to work well.
 
@@ -129,9 +152,9 @@
   the RQL: $k = mu0 + 0.5*delta*sigma (Appl. Statist.(1974)
   23, No. 3, p. 420). For this reason we treat k as a
   constant value and optimize n, h and H. For cost
-  parameters P0, P1 and C0, C1, only one pair is needed. If
-  P0 and P1 are given, they will be used first, else C0 and
-  C1 will be used.
+  parameters either {P0, P1} or {C0, C1} is needed. If P0
+  and P1 are given, they will be used first, else C0 and C1
+  will be used.
 
   \code{echCusum} is used to calculate the ECH (Expected
   Cost per Hour) for a given design point
@@ -153,7 +176,7 @@ P0=150,P1=50,Cr=30,d1=0,d2=0))
 P0=150,P1=50,Cr=30,d1=0,d2=0,lambda=0.05))
 contour(yy2)
 ## LINE 14
-(y14 <- ecoCusum(P0=150,P1=50,Cr=30,delta=0.5,d1=0,d2=0))
+(y14 <- ecoCusum(n=30,P0=150,P1=50,Cr=30,delta=0.5,d1=0,d2=0,method="L-BFGS-B"))
 (yy14 <- ecoCusum(h=seq(2.55,2.65,by=0.01),H=seq(0.3,0.4,by=0.01),
 n=28:30,P0=150,P1=50,Cr=30,delta=0.5,d1=0,d2=0))
 #Douglas (2009). Statistical quality control: a modern introduction, sixth edition, p470.

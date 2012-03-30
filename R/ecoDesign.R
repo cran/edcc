@@ -2,6 +2,13 @@
 ##' interval) and L(number of s.d. from control limits to center line)
 ##' for Economic Design of X-bar control chart .
 ##'
+##' When parameter \code{par} is specified, optimization algorithms
+##' would be used as default. \code{par} can be specified as:
+##' \code{par = c(h, L)} where \code{h} and \code{L} are the initial
+##' values of smapling interval and control limit when \code{n} is
+##' specified; or \code{par = c(h, L, n)}. Good inital values may lead
+##' to good optimum results.
+##' 
 ##' When parameters \code{h}, \code{L}, \code{n} are all undefined,
 ##' \code{ecoXbar} function will try to find the global optimum point
 ##' to minimize the ECH (Expected Cost per Hour) using optimization
@@ -12,13 +19,13 @@
 ##' vector, \code{ecoXbar} function will try to find the optimum point
 ##' for each \code{n} value using optimization algorithms. When
 ##' \code{h}, \code{L} and \code{n} are all given, \code{ecoXbar}
-##' function will use a "robust" way to calculate the optimum point,
+##' function will use the "grid method" to calculate the optimum point,
 ##' that is ECH for all the combinations of the parameters will be
-##' calculated. The "robust" way is much slower than using
+##' calculated. The "grid method" way is much slower than using
 ##' optimization algorithms, but it would be a good choice when
 ##' optimization algorithms fail to work well.
 ##'
-##' For cost parameters P0, P1 and C0, C1, only one pair is needed.
+##' For cost parameters either {P0, P1} or {C0, C1} is needed.
 ##' If P0 and P1 are given, they will be used first, else C0 and C1
 ##' will be used.  For economic design of X-bar chart, only if the
 ##' difference between P0 and P1 keeps the same, the results are
@@ -37,15 +44,17 @@
 ##' 'Details'
 ##' @param n sample size. It can be an integer vector or left
 ##' undefined. See 'Details'
-##' @param lambda we assume the in-control time follows a exponential
+##' @param lambda we assume the in-control time follows an exponential
 ##' distribution with mean 1/lambda. Default value is 0.05.
-##' @param delta critical value: the extent of the shift when
-##' assignable cause occurs. delta = |(mu1 - mu0)/sigma|. Default
-##' value is 2.
+##' @param delta shift in process mean in standard deviation units
+##' when assignable cause occurs (delta = |mu1 - mu0|/sigma), where
+##' sigma is the standard deviation of observations; mu0 is the
+##' in-control process mean; mu1 is the out-of-control process mean.
+##' Default value is 2.
 ##' @param P0 profit per hour earned by the process operating in
 ##' control. See 'Details'.
 ##' @param P1 profit per hour earned by the process operating out of
-##' control
+##' control(P0 > P1).
 ##' @param C0 cost per hour due to nonconformities produced while the
 ##' process is in control.
 ##' @param C1 cost per hour due to nonconformities produced while the
@@ -75,17 +84,27 @@
 ##' @param call.print a logical value indicating whether the "call"
 ##' should be printed on the contour plot. Default is TRUE
 ##' @param ... other arguments to be passed to \code{optim} function.
-##' @return return the optimum parameters and the corresponding
-##' ECH(Expected Cost per Hour) value
-##' @seealso \code{\link{ecoCusum}},
-##' \code{\link{ecoEwma}}, \code{\link{contour}}, \code{\link[stats]{optim}},
+##' @return The function returns a list of elements \code{optimum},
+##' \code{cost.frame}, \code{FAR} and \code{ATS}. \code{optimum} is a
+##' vector with the optimum parameters and the corresponding ECH
+##' value; \code{cost.frame} is a dataframe with the optimum
+##' parameters and the corresponding ECH values for all given
+##' \code{n}(if \code{n} is not specified, \code{cost.frame} won't be
+##' returned); \code{FAR} indicates the false alarm rate during the
+##' in-control time, which is calculated as lambda*(average number of
+##' false alarm); \code{ATS} indicates the average time to signal
+##' after the occurrence of an assignable cause, calculated as h*ARL2
+##' - tau, where tau is the expected time of occurrence of the
+##' assignable cause given it occurs between the i-th and (i+1)st
+##' samples
+##' @seealso \code{\link{ecoCusum}}, \code{\link{ecoEwma}},
+##' \code{\link{contour}}, \code{\link[stats]{optim}},
 ##' \code{\link{update.edcc}}
 ##' @references Douglas (2009). Statistical quality control: a modern
 ##' introduction, sixth edition,  463-471.
 ##' 
 ##' Lorenzen and Vance (1986). The economic design of control charts:
 ##' a unified approach, Technometrics, 28. 3-10.
-##' 
 ##' @examples 
 ##' # Douglas (2009). Statistical quality control: a modern introduction, sixth edition, p470.
 ##' # In control profit per hour is 110, out of control profit per hour is 10
@@ -110,16 +129,21 @@
 ##' # update the parameters
 ##' update(x,P0=NULL,P1=NULL,C0=10,C1=110)
 ##' @export
-ecoXbar <- function(h,L,n,lambda=.05,delta=2,P0=NULL,P1=NULL,C0=NULL,C1=NULL,Cr=25,Cf=50,T0=0.0167,Tc=1,Tf=0,Tr=0,a=1,b=.1,d1=1,d2=1,nlevels=30,par=NULL,contour.plot=FALSE,call.print=TRUE,...){
+ecoXbar <- function(h, L, n, lambda = .05, delta = 2, P0 = NULL, P1 = NULL, C0 = NULL, C1 = NULL, Cr = 25, Cf = 50, T0 = 0.0167, Tc = 1, Tf = 0, Tr = 0, a = 1, b = .1, d1 = 1, d2 = 1, nlevels = 30, par = NULL, contour.plot = FALSE, call.print = TRUE, ...){
   if(!is.null(par)){
     if(!is.vector(par)) stop("par should be a vector of length 2 or 3!") else
     if(!(length(par)==3 || length(par)==2)) stop("par should be a vector of length 2 or 3!") else
     if(length(par)==3){
       opt <- optim(par,.echXbar1,lambda=lambda,delta=delta,P0=P0,P1=P1,C0=C0,C1=C1,Cr=Cr,Cf=Cf,T0=T0,Tc=Tc,Tf=Tf,Tr=Tr,a=a,b=b,d1=d1,d2=d2,...)
-      cat('The optimum parameters maybe around h=', opt$par[1],' L=', opt$par[2],' n=', opt$par[3],' and the minimum ECH is about', opt$value,'\n')
       optimum <- as.data.frame(t(c(opt$par,opt$value)))
-      colnames(optimum) <- c("Optimum h","Optimum L","Optimum n","ECH")
-      rownames(optimum) <- ""
+      gn <- round(as.numeric(optimum[3])) # global optimum of n
+      cost.frame <- NULL
+      for(k in c(gn-1, gn, gn+1)){
+        opt <- optim(par[1:2], .echXbar2,n=k,lambda=lambda,delta=delta,P0=P0,P1=P1,C0=C0,C1=C1,Cr=Cr,Cf=Cf,T0=T0,Tc=Tc,Tf=Tf,Tr=Tr,a=a,b=b,d1=d1,d2=d2,...)
+        cost.frame <- rbind(cost.frame,c(opt$par,k,opt$value))
+      }
+      optimum <- cost.frame[which(cost.frame[,4]==min(cost.frame[,4])),]
+      names(optimum) <- c("Optimum h","Optimum L","Optimum n","ECH")
       optXbar <- list(optimum=optimum)
     } else{
       cost.frame <- NULL
@@ -127,18 +151,25 @@ ecoXbar <- function(h,L,n,lambda=.05,delta=2,P0=NULL,P1=NULL,C0=NULL,C1=NULL,Cr=
         opt <- optim(par,.echXbar2,n=k,lambda=lambda,delta=delta,P0=P0,P1=P1,C0=C0,C1=C1,Cr=Cr,Cf=Cf,T0=T0,Tc=Tc,Tf=Tf,Tr=Tr,a=a,b=b,d1=d1,d2=d2,...)
         cost.frame <- rbind(cost.frame,c(opt$par,k,opt$value))
       }
+      optimum <- cost.frame[which(cost.frame[,4]==min(cost.frame[,4])),]
+      names(optimum) <- c("Optimum h","Optimum L","Optimum n","ECH")
       colnames(cost.frame) <- c("Optimum h","Optimum L","Optimum n","ECH")
       rownames(cost.frame) <- rep("",length(n))
-      optimum <- cost.frame[which(cost.frame[,4]==min(cost.frame[,4])),]
       optXbar <- list(optimum=optimum,cost.frame=cost.frame)
     }
   }else
   if(missing(h) && missing(L) && missing(n)){
     opt <- optim(c(1,3,5),.echXbar1,lambda=lambda,delta=delta,P0=P0,P1=P1,C0=C0,C1=C1,Cr=Cr,Cf=Cf,T0=T0,Tc=Tc,Tf=Tf,Tr=Tr,a=a,b=b,d1=d1,d2=d2,...)
-    cat('The optimum parameters maybe around h=', opt$par[1],' L=', opt$par[2],' n=', opt$par[3],' and the minimum ECH is about', opt$value,'\n')
+#    cat('The optimum parameters maybe around h=', opt$par[1],' L=', opt$par[2],' n=', opt$par[3],' and the minimum ECH is about', opt$value,'\n')
     optimum <- as.data.frame(t(c(opt$par,opt$value)))
-    colnames(optimum) <- c("Optimum h","Optimum L","Optimum n","ECH")
-    rownames(optimum) <- ""
+    gn <- round(as.numeric(optimum[3])) # global optimum of n
+    cost.frame <- NULL
+    for(k in c(gn-1, gn, gn+1)){
+      opt <- optim(c(1,3),.echXbar2,n=k,lambda=lambda,delta=delta,P0=P0,P1=P1,C0=C0,C1=C1,Cr=Cr,Cf=Cf,T0=T0,Tc=Tc,Tf=Tf,Tr=Tr,a=a,b=b,d1=d1,d2=d2,...)
+      cost.frame <- rbind(cost.frame,c(opt$par,n=k,opt$value))
+    }
+    optimum <- cost.frame[which(cost.frame[,4]==min(cost.frame[,4])),]
+    names(optimum) <- c("Optimum h","Optimum L","Optimum n","ECH")
     optXbar <- list(optimum=optimum)
   }else
   if(missing(h) && missing(L)){
@@ -147,9 +178,10 @@ ecoXbar <- function(h,L,n,lambda=.05,delta=2,P0=NULL,P1=NULL,C0=NULL,C1=NULL,Cr=
       opt <- optim(c(1,3),.echXbar2,n=k,lambda=lambda,delta=delta,P0=P0,P1=P1,C0=C0,C1=C1,Cr=Cr,Cf=Cf,T0=T0,Tc=Tc,Tf=Tf,Tr=Tr,a=a,b=b,d1=d1,d2=d2,...)
       cost.frame <- rbind(cost.frame,c(opt$par,n=k,opt$value))
     }
+    optimum <- cost.frame[which(cost.frame[,4]==min(cost.frame[,4])),]
+    names(optimum) <- c("Optimum h","Optimum L","Optimum n","ECH")
     colnames(cost.frame) <- c("Optimum h","Optimum L","Optimum n","ECH")
     rownames(cost.frame) <- rep("",length(n))
-    optimum <- cost.frame[which(cost.frame[,4]==min(cost.frame[,4])),]
     optXbar <- list(optimum=optimum,cost.frame=cost.frame)
   }else{
     cost.frame <- NULL
@@ -165,9 +197,10 @@ ecoXbar <- function(h,L,n,lambda=.05,delta=2,P0=NULL,P1=NULL,C0=NULL,C1=NULL,Cr=
         opt.ech <- ech; opt.mat <- mat
       }
     }
+    optimum <- cost.frame[which(cost.frame[,4]==min(cost.frame[,4])),]
+    names(optimum) <- c("Optimum h","Optimum L","Optimum n","ECH")
     colnames(cost.frame) <- c("Optimum h","Optimum L","Optimum n","ECH")
     rownames(cost.frame) <- rep("",length(n))
-    optimum <- cost.frame[which(cost.frame[,4]==min(cost.frame[,4])),]
     ## FIXME
     if(contour.plot){
       if(call.print){
@@ -182,8 +215,20 @@ ecoXbar <- function(h,L,n,lambda=.05,delta=2,P0=NULL,P1=NULL,C0=NULL,C1=NULL,Cr=
       mtext(sprintf('Opt h=%s   Opt L=%s   n=%s   ECH=%s',optimum[1], optimum[2], optimum[3],round(optimum[4],digits=4)),side=1,line=4.5)
       points(optimum[1],optimum[2],pch=3)
     }
-    optXbar <- list(optimum=optimum,cost.frame=cost.frame,opt.mat=opt.mat)
+    optXbar <- list(optimum=optimum,cost.frame=cost.frame, opt.mat=opt.mat)
   }
+  ## FIXME: alpha~sided
+  opth <- as.numeric(optXbar$optimum[1])
+  optL <- as.numeric(optXbar$optimum[2])
+  optn <- as.numeric(optXbar$optimum[3])
+  alpha <- 2*pnorm(-optL)
+  beta <- pnorm(optL-delta*sqrt(optn))-pnorm(-optL-delta*sqrt(optn))
+  ARL1 <- 1/alpha
+  ARL2 <- 1/(1-beta)
+  s <- 1/(exp(lambda*opth)-1)
+  tau <- (1-(1+lambda*opth)*exp(-lambda*opth))/(lambda*(1-exp(-lambda*opth)))
+  optXbar$FAR <- lambda*s/ARL1
+  optXbar$ATS <- ARL2*opth - tau
   optXbar$call <- match.call()
   return(structure(optXbar,class="edcc"))
 }
@@ -196,7 +241,7 @@ echXbar <- function(h,L,n,lambda=.05,delta=2,P0=NULL,P1=NULL,C0=NULL,C1=NULL,Cr=
   ARL1 <- 1/alpha
   ARL2 <- 1/(1-beta)
   tau <- (1-(1+lambda*h)*exp(-lambda*h))/(lambda*(1-exp(-lambda*h)))
-  s <- exp(-lambda*h)/(1-exp(-lambda*h))
+  s <- 1/(exp(lambda*h)-1)
   if(!is.null(P0)&!is.null(P1)){
     ECT <- 1/lambda+(1-d1)*s*Tf/ARL1 - tau + n*T0 + h*ARL2 + Tc + Tr
     ECP <- P0/lambda + P1*(-tau+n*T0+h*ARL2+d1*Tc+d2*Tr) - s*Cf/ARL1 - Cr - (a+b*n)*(1/lambda-tau+n*T0+h*ARL2+d1*Tc+d2*Tr)/h
@@ -218,6 +263,13 @@ echXbar <- function(h,L,n,lambda=.05,delta=2,P0=NULL,P1=NULL,C0=NULL,C1=NULL,Cr=
 ##' Economic Design of Cusum control chart. For more information about
 ##' the reference value see 'Details'.
 ##'
+##' When parameter \code{par} is specified, optimization algorithms
+##' would be used as default. \code{par} can be specified as:
+##' \code{par = c(h, H)} where \code{h} and \code{H} are the initial
+##' values of smapling interval and decision interval when \code{n} is
+##' specified; or \code{par = c(h, H, n)}. Good inital values may lead
+##' to good optimum results.
+##' 
 ##' When parameters \code{h}, \code{H}, \code{n} are all undefined,
 ##' \code{ecoCusum} function will try to find the global optimum point
 ##' to minimize the ECH (Expected Cost per Hour) using optimization
@@ -228,9 +280,9 @@ echXbar <- function(h,L,n,lambda=.05,delta=2,P0=NULL,P1=NULL,C0=NULL,C1=NULL,Cr=
 ##' integer vector, \code{ecoCusum} function will try to find the
 ##' optimum point for each \code{n} value using optimization
 ##' algorithms. When \code{h}, \code{H} and \code{n} are all given,
-##' \code{ecoCusum} function will use a "robust" way to calculate the
+##' \code{ecoCusum} function will use a "grid method" way to calculate the
 ##' optimum point, that is ECH for all the combinations of the
-##' parameters will be calculated. The "robust" way is much slower
+##' parameters will be calculated. The "grid method" way is much slower
 ##' than using optimization algorithms, but it would be a good choice
 ##' when optimization algorithms fail to work well.
 ##' 
@@ -239,7 +291,7 @@ echXbar <- function(h,L,n,lambda=.05,delta=2,P0=NULL,P1=NULL,C0=NULL,C1=NULL,Cr=
 ##' is chosen mid-way the between AQL and the RQL: $k = mu0 +
 ##' 0.5*delta*sigma (Appl. Statist.(1974) 23, No. 3, p. 420). For this
 ##' reason we treat k as a constant value and optimize n, h and H.
-##' For cost parameters P0, P1 and C0, C1, only one pair is needed.
+##' For cost parameters either {P0, P1} or {C0, C1} is needed.
 ##' If P0 and P1 are given, they will be used first, else C0 and C1
 ##' will be used.
 ##'
@@ -253,9 +305,11 @@ echXbar <- function(h,L,n,lambda=.05,delta=2,P0=NULL,P1=NULL,C0=NULL,C1=NULL,Cr=
 ##' undefined. See 'Details'
 ##' @param n sample size. It can be an integer vector or left
 ##' undefined. See 'Details'
-##' @param delta critical value: the extent of the shift when
-##' assignable cause occurs. delta = |(mu1 - mu0)/sigma|. Default
-##' value is 2.
+##' @param delta shift in process mean in standard deviation units
+##' when assignable cause occurs (delta = |mu1 - mu0|/sigma), where
+##' sigma is the standard deviation of observations; mu0 is the
+##' in-control process mean; mu1 is the out-of-control process mean.
+##' Default value is 2.
 ##' @param lambda we assume the in-control time follows a exponential
 ##' distribution with mean 1/lambda. Default value is 0.05.
 ##' @param P0 profit per hour earned by the process operating in
@@ -293,8 +347,19 @@ echXbar <- function(h,L,n,lambda=.05,delta=2,P0=NULL,P1=NULL,C0=NULL,C1=NULL,Cr=
 ##' @param call.print a logical value indicating whether the "call"
 ##' should be printed on the contour plot. Default is TRUE
 ##' @param ... other arguments to be passed to \code{optim} function..
-##' @return return the optimum parameters and the corresponding
-##' ECH(Expected Cost per Hour) value.
+##' @return The function returns a list of elements \code{optimum},
+##' \code{cost.frame}, \code{FAR} and \code{ATS}. \code{optimum} is a
+##' vector with the optimum parameters and the corresponding ECH
+##' value; \code{cost.frame} is a dataframe with the optimum
+##' parameters and the corresponding ECH values for all given
+##' \code{n}(if \code{n} is not specified, \code{cost.frame} won't be
+##' returned); \code{FAR} indicates the false alarm rate during the
+##' in-control time, which is calculated as lambda*(average number of
+##' false alarm); \code{ATS} indicates the average time to signal
+##' after the occurrence of an assignable cause, calculated as h*ARL2
+##' - tau, where tau is the expected time of occurrence of the
+##' assignable cause given it occurs between the i-th and (i+1)st
+##' samples
 ##' @seealso \code{\link{ecoXbar}}, \code{\link{ecoEwma}},
 ##' \code{\link[spc]{xcusum.arl}}, \code{\link[stats]{optim}},
 ##' \code{\link{update.edcc}}, \code{\link{contour}}
@@ -320,7 +385,7 @@ echXbar <- function(h,L,n,lambda=.05,delta=2,P0=NULL,P1=NULL,C0=NULL,C1=NULL,Cr=
 ##' P0=150,P1=50,Cr=30,d1=0,d2=0,lambda=0.05))
 ##' contour(yy2)
 ##' ## LINE 14
-##' (y14 <- ecoCusum(P0=150,P1=50,Cr=30,delta=0.5,d1=0,d2=0))
+##' (y14 <- ecoCusum(n=30,P0=150,P1=50,Cr=30,delta=0.5,d1=0,d2=0,method="L-BFGS-B"))
 ##' (yy14 <- ecoCusum(h=seq(2.55,2.65,by=0.01),H=seq(0.3,0.4,by=0.01),
 ##' n=28:30,P0=150,P1=50,Cr=30,delta=0.5,d1=0,d2=0))
 ##' #Douglas (2009). Statistical quality control: a modern introduction, sixth edition, p470.
@@ -334,40 +399,54 @@ ecoCusum <- function( h, H,n,delta = 2,lambda = .01, P0 = NULL, P1 = NULL,C0 = N
       if(!(length(par)==3 || length(par)==2)) stop("par should be a vector of length 2 or 3!") else
       if(length(par)==3){
         opt <- optim(par,.echCusum1,delta = delta,lambda = lambda, P0 = P0, P1 = P1, C0 = C0, C1 = C1, Cr = Cr, Cf = Cf,T0 = T0, Tc = Tc,Tf = Tf,Tr = Tr, a = a, b = b, d1 = d1, d2 = d2,sided = sided,...)
-      cat('The optimum parameters maybe around h=', opt$par[1],' H=', opt$par[2],' n=', opt$par[3],' and the minimum ECH is about', opt$value,'\n')
-      optimum <- as.data.frame(t(c(opt$par,opt$value)))
-      colnames(optimum) <- c("Optimum h","Optimum H","Optimum n","ECH")
-      rownames(optimum) <- ""
-      optCusum <- list(optimum=optimum)
-    } else{
+#      cat('The optimum parameters maybe around h=', opt$par[1],' H=', opt$par[2],' n=', opt$par[3],' and the minimum ECH is about', opt$value,'\n')
+        optimum <- as.data.frame(t(c(opt$par,opt$value)))
+        gn <- round(as.numeric(optimum[3])) # global optimum of n
+        cost.frame <- NULL
+        for(k in c(gn-1, gn, gn+1)){
+          opt <- optim(par[1:2],.echCusum2,n=k,delta = delta,lambda = lambda, P0 = P0, P1 = P1, C0 = C0, C1 = C1, Cr = Cr, Cf = Cf,T0 = T0, Tc = Tc,Tf = Tf,Tr = Tr, a = a, b = b, d1 = d1, d2 = d2,sided = sided,...)
+          cost.frame <- rbind(cost.frame,c(opt$par,k,opt$value))
+        }
+        optimum <- cost.frame[which(cost.frame[,4]==min(cost.frame[,4])),]
+        names(optimum) <- c("Optimum h","Optimum H","Optimum n","ECH")
+        optCusum <- list(optimum=optimum)
+      } else{
       cost.frame <- NULL
       for(k in n){
         opt <- optim(par,.echCusum2,n=k,delta = delta,lambda = lambda, P0 = P0, P1 = P1, C0 = C0, C1 = C1, Cr = Cr, Cf = Cf,T0 = T0, Tc = Tc,Tf = Tf,Tr = Tr, a = a, b = b, d1 = d1, d2 = d2,sided = sided,...)
         cost.frame <- rbind(cost.frame,c(opt$par,k,opt$value))
       }
+      optimum <- cost.frame[which(cost.frame[,4]==min(cost.frame[,4])),]
+      names(optimum) <- c("Optimum h","Optimum H","Optimum n","ECH")
       colnames(cost.frame) <- c("Optimum h","Optimum H","Optimum n","ECH")
       rownames(cost.frame) <- rep("",length(n))
-      optimum <- cost.frame[which(cost.frame[,4]==min(cost.frame[,4])),]
       optCusum <- list(optimum=optimum,cost.frame=cost.frame)
     }
-  }else
-  if(missing(h) && missing(H) && missing(n)){
-    opt <- optim(c(1,1,5),.echCusum1,delta = delta,lambda = lambda, P0 = P0, P1 = P1, C0 = C0, C1 = C1, Cr = Cr, Cf = Cf,T0 = T0, Tc = Tc,Tf = Tf,Tr = Tr, a = a, b = b, d1 = d1, d2 = d2,sided = sided,...)
-    cat('The optimum parameters maybe around h=', opt$par[1],' H=', opt$par[2],' n=', opt$par[3],' and the minimum ECH is about', opt$value,'\n')
-    optimum <- as.data.frame(t(c(opt$par,opt$value)))
-    colnames(optimum) <- c("Optimum h","Optimum H","Optimum n","ECH")
-    rownames(optimum) <- ""
-    optCusum <- list(optimum=optimum)
-  }else
+    }else
+    if(missing(h) && missing(H) && missing(n)){
+      opt <- optim(c(1,1,5),.echCusum1,delta = delta,lambda = lambda, P0 = P0, P1 = P1, C0 = C0, C1 = C1, Cr = Cr, Cf = Cf,T0 = T0, Tc = Tc,Tf = Tf,Tr = Tr, a = a, b = b, d1 = d1, d2 = d2,sided = sided,...)
+#    cat('The optimum parameters maybe around h=', opt$par[1],' H=', opt$par[2],' n=', opt$par[3],' and the minimum ECH is about', opt$value,'\n')
+      optimum <- as.data.frame(t(c(opt$par,opt$value)))
+      gn <- round(as.numeric(optimum[3])) # global optimum of n
+      cost.frame <- NULL
+      for(k in c(gn-1, gn, gn+1)){
+        opt <- optim(c(1,1),.echCusum2,n=k,delta = delta,lambda = lambda, P0 = P0, P1 = P1, C0 = C0, C1 = C1, Cr = Cr, Cf = Cf,T0 = T0, Tc = Tc,Tf = Tf,Tr = Tr, a = a, b = b, d1 = d1, d2 = d2,sided = sided,...)
+        cost.frame <- rbind(cost.frame,c(opt$par,k,opt$value))
+      }
+      optimum <- cost.frame[which(cost.frame[,4]==min(cost.frame[,4])),]
+      names(optimum) <- c("Optimum h","Optimum H","Optimum n","ECH")
+      optCusum <- list(optimum=optimum)
+    }else
   if(missing(h) && missing(H)){
     cost.frame <- NULL
     for(k in n){
       opt <- optim(c(1,1),.echCusum2,n=k,delta = delta,lambda = lambda, P0 = P0, P1 = P1, C0 = C0, C1 = C1, Cr = Cr, Cf = Cf,T0 = T0, Tc = Tc,Tf = Tf,Tr = Tr, a = a, b = b, d1 = d1, d2 = d2,sided = sided,...)
       cost.frame <- rbind(cost.frame,c(opt$par,n=k,opt$value))
     }
+    optimum <- cost.frame[which(cost.frame[,4]==min(cost.frame[,4])),]
+    names(optimum) <- c("Optimum h","Optimum H","Optimum n","ECH")
     colnames(cost.frame) <- c("Optimum h","Optimum H","Optimum n","ECH")
     rownames(cost.frame) <- rep("",length(n))
-    optimum <- cost.frame[which(cost.frame[,4]==min(cost.frame[,4])),]
     optCusum <- list(optimum=optimum,cost.frame=cost.frame)
   }else{
   cost.frame <- NULL
@@ -389,9 +468,10 @@ ecoCusum <- function( h, H,n,delta = 2,lambda = .01, P0 = NULL, P1 = NULL,C0 = N
       opt.ech <- ech; opt.mat <- mat
     }
   }
+  optimum <- cost.frame[which(cost.frame[,4]==min(cost.frame[,4])),]
+  names(optimum) <- c("Optimum h","Optimum H","Optimum n","ECH")
   colnames(cost.frame) <- c("Optimum h","Optimum H","Optimum n","ECH")
   rownames(cost.frame) <- rep("",length(n))
-  optimum <- cost.frame[which(cost.frame[,4]==min(cost.frame[,4])),]
   if(contour.plot){
     if(call.print){
       ca <- match.call()
@@ -405,8 +485,18 @@ ecoCusum <- function( h, H,n,delta = 2,lambda = .01, P0 = NULL, P1 = NULL,C0 = N
     mtext(sprintf('Opt h=%s   Opt H=%s   n=%s   ECH=%s',optimum[1], optimum[2], optimum[3],round(optimum[4],digits=4)),side=1,line=4.5)
     points(optimum[1],optimum[2],pch=3)
   }
-  optCusum <- list(optimum=optimum,cost.frame=cost.frame,opt.mat=opt.mat)
+  optCusum <- list(optimum=optimum, cost.frame=cost.frame, opt.mat=opt.mat)
 }
+    opth <- as.numeric(optCusum$optimum[1])
+    optH <- as.numeric(optCusum$optimum[2])
+    optn <- as.numeric(optCusum$optimum[3])
+    delta.std <- sqrt(as.numeric(optn))*delta
+    ARL1 <- as.numeric(xcusum.arl(0.5*delta.std, optH, 0, sided=sided))
+    ARL2 <- as.numeric(xcusum.arl(0.5*delta.std, optH, delta.std, sided=sided))
+    s <- 1/(exp(lambda*opth)-1)
+    tau <- (1-(1+lambda*opth)*exp(-lambda*opth))/(lambda*(1-exp(-lambda*opth)))
+    optCusum$FAR <- lambda*s/ARL1
+    optCusum$ATS <- ARL2*opth - tau
     optCusum$call <- match.call()
     return(structure(optCusum,class="edcc"))
 }
@@ -420,7 +510,7 @@ echCusum <- function(h,H,n,delta = 2,lambda = .01, P0 = NULL, P1 = NULL,C0 = NUL
     ARL1 <- as.numeric(xcusum.arl(k,H,0,sided=sided))
     ARL2 <- as.numeric(xcusum.arl(k,H,delta.std,sided=sided))
     tau <- (1-(1+lambda*h)*exp(-lambda*h))/(lambda*(1-exp(-lambda*h)))
-    s <- exp(-lambda*h)/(1-exp(-lambda*h))
+    s <- 1/(exp(lambda*h)-1)
     if(!is.null(P0)&!is.null(P1)){
       ECT <- 1/lambda+(1-d1)*s*Tf/ARL1 - tau + n*T0 + h*ARL2 + Tc + Tr
       ECP <- P0/lambda + P1*(-tau+n*T0+h*ARL2+d1*Tc+d2*Tr) - s*Cf/ARL1 - Cr - (a+b*n)*(1/lambda-tau+n*T0+h*ARL2+d1*Tc+d2*Tr)/h
@@ -442,7 +532,16 @@ echCusum <- function(h,H,n,delta = 2,lambda = .01, P0 = NULL, P1 = NULL,C0 = NUL
 ##' 
 ##' Parameter \code{w} should always be given, because the range of
 ##' \code{w} is so restricted that optimization algorithms usually
-##' don't converge.  When parameters \code{h}, \code{k}, \code{n} are
+##' don't converge.
+##' 
+##' When parameter \code{par} is specified, optimization algorithms
+##' would be used as default. \code{par} can be specified as:
+##' \code{par = c(h, k)} where \code{h} and \code{k} are the initial
+##' values of smapling interval and control limit when \code{n} is
+##' specified; or \code{par = c(h, k, n)}. Good inital values may lead
+##' to good optimum results.
+##' 
+##' When parameters \code{h}, \code{k}, \code{n} are
 ##' all undefined, \code{ecoEwma} function will try to find the global
 ##' optimum point to minimize the ECH (Expected Cost per Hour) using
 ##' optimization algorithms (\code{optim} function), but in this case
@@ -452,13 +551,13 @@ echCusum <- function(h,H,n,delta = 2,lambda = .01, P0 = NULL, P1 = NULL,C0 = NUL
 ##' given as an integer vector, \code{ecoEwma} function will try to
 ##' find the optimum point for each \code{n} value using optimization
 ##' algorithms. When \code{h}, \code{k} and \code{n} are all given,
-##' \code{ecoEwma} function will use a "robust" way to calculate the
+##' \code{ecoEwma} function will use a "grid method" way to calculate the
 ##' optimum point, that is ECH for all the combinations of the
-##' parameters will be calculated. The "robust" way is much slower
+##' parameters will be calculated. The "grid method" way is much slower
 ##' than using optimization algorithms, but it would be a good choice
 ##' when optimization algorithms fail to work well.
 ##' 
-##' For cost parameters P0, P1 and C0, C1, only one pair is needed.
+##' For cost parameters either {P0, P1} or {C0, C1} is needed.
 ##' If P0 and P1 are given, they will be used first, else C0 and C1
 ##' will be used.
 ##'
@@ -474,9 +573,11 @@ echCusum <- function(h,H,n,delta = 2,lambda = .01, P0 = NULL, P1 = NULL,C0 = NUL
 ##' left undefined. See 'Details'
 ##' @param n sample size. It can be an integer vector or left
 ##' undefined. See 'Details'
-##' @param delta critical value: the extent of the shift when
-##' assignable cause occurs. delta = |(mu1 - mu0)/sigma|. Default
-##' value is 2.
+##' @param delta shift in process mean in standard deviation units
+##' when assignable cause occurs (delta = |mu1 - mu0|/sigma), where
+##' sigma is the standard deviation of observations; mu0 is the
+##' in-control process mean; mu1 is the out-of-control process mean.
+##' Default value is 2.
 ##' @param lambda we assume the in-control time follows a exponential
 ##' distribution with mean 1/lambda. Default value is 0.05.
 ##' @param P0 profit per hour earned by the process operating in
@@ -514,67 +615,90 @@ echCusum <- function(h,H,n,delta = 2,lambda = .01, P0 = NULL, P1 = NULL,C0 = NUL
 ##' @param call.print a logical value indicating whether the "call"
 ##' should be printed on the contour plot. Default is TRUE
 ##' @param ... other arguments to be passed to contour function.
-##' @return return the optimum parameters and the corresponding cost
-##' value
+##' @return The function returns a list of elements \code{optimum},
+##' \code{cost.frame}, \code{FAR} and \code{ATS}. \code{optimum} is a
+##' vector with the optimum parameters and the corresponding ECH
+##' value; \code{cost.frame} is a dataframe with the optimum
+##' parameters and the corresponding ECH values for all given
+##' \code{n}(if \code{n} is not specified, \code{cost.frame} won't be
+##' returned); \code{FAR} indicates the false alarm rate during the
+##' in-control time, which is calculated as lambda*(average number of
+##' false alarm); \code{ATS} indicates the average time to signal
+##' after the occurrence of an assignable cause, calculated as h*ARL2
+##' - tau, where tau is the expected time of occurrence of the
+##' assignable cause given it occurs between the i-th and (i+1)st
+##' samples
 ##' @seealso \code{\link{ecoXbar}}, \code{\link{ecoCusum}},
 ##' \code{\link[spc]{xewma.arl}}, \code{\link{update.edcc}},
 ##' \code{\link[stats]{optim}},\code{\link{contour}}
+##' @references Lorenzen and Vance (1986). The economic design of
+##' control charts: a unified approach, Technometrics, 28. 3-10.
 ##' @examples
 ##' #Douglas (2009). Statistical quality control: a modern introduction, sixth edition, p470.
 ##' ## Set w from 0.1 to 1 by 0.1 to catch the trend.
-##' y <- list()
-##' w <- seq(0.1,0.9,by=0.1)
-##' for(i in 1:length(w))
-##' y[[i]] <- ecoEwma(w=w[i],P0=110,P1=10,Cf=50)$optimum
-##' y <- do.call("rbind",y)
+##' ecoEwma(w=seq(0.1,1,by=0.1),P0=110,P1=10,Cf=50)
 ##' #yy = ecoEwma( h=seq(.7,1,by=.01), w=seq(0.8,1,by=.01),k=seq(2.9,3.3,by=0.01),n=4:5,P0=110,P1=10,Cf=50,contour.plot=TRUE)
 ##' ##$optimum
 ##' ##Optimum h Optimum w Optimum k     n       ECH
 ##' ##0.81000   0.95000   2.99000   5.00000  10.36482 
 ##' #contour(yy)
 ##' @export
- ecoEwma <- function( h=seq(.7,1,by=.1), w=seq(0.7,1,by=.1),k=seq(2,4,by=0.1),n=4:8,delta = 2,lambda = .05, P0 = NULL, P1 = NULL,C0 = NULL,C1 = NULL, Cr = 25, Cf = 10,T0 = 0.0167,Tc = 1, Tf = 0, Tr = 0, a = 1, b = .1,d1=1,d2=1, nlevels=30, sided="two",par=NULL,contour.plot=FALSE,call.print=TRUE,...){
-   if(!is.null(par)){
-     if(!is.vector(par)) stop("par should be a vector of length 2 or 3!") else
-     if(!(length(par)==2 || length(par)==3)) stop("par should be a vector of length 2 or 3!") else
-     if(length(par)==3){
-       opt <- optim(par,.echEwma1,w=w,delta = delta,lambda = lambda, P0 = P0, P1 = P1, C0 = C0, C1 = C1, Cr = Cr, Cf = Cf,T0 = T0, Tc = Tc,Tf = Tf,Tr = Tr, a = a, b = b, d1 = d1, d2 = d2,sided = sided,...)
-       cat('The optimum parameters maybe around h=', opt$par[1],' k=', opt$par[2],' n=',opt$par[3],'when w=',w,' and the minimum ECH is about', opt$value,'\n')
-       optimum <- as.data.frame(t(c(opt$par,w,opt$value)))
-       colnames(optimum) <- c("Optimum h","Optimum k","Optimum n","Optimum w","ECH")
-      rownames(optimum) <- ""
-      optEwma <- list(optimum=optimum)
+ecoEwma <- function( h=seq(.7,1,by=.1), w=seq(0.7,1,by=.1),k=seq(2,4,by=0.1),n=4:8,delta = 2,lambda = .05, P0 = NULL, P1 = NULL,C0 = NULL,C1 = NULL, Cr = 25, Cf = 10,T0 = 0.0167,Tc = 1, Tf = 0, Tr = 0, a = 1, b = .1,d1=1,d2=1, nlevels=30, sided="two",par=NULL,contour.plot=FALSE,call.print=TRUE,...){
+  if(!is.null(par)){
+    if(!is.vector(par)) stop("par should be a vector of length 2 or 3!") else
+    if(!(length(par)==2 || length(par)==3)) stop("par should be a vector of length 2 or 3!") else
+    if(length(par)==3){
+      cost.frame <- NULL
+      for(wi in w){
+        opt <- optim(par,.echEwma1,w=wi,delta = delta,lambda = lambda, P0 = P0, P1 = P1, C0 = C0, C1 = C1, Cr = Cr, Cf = Cf,T0 = T0, Tc = Tc,Tf = Tf,Tr = Tr, a = a, b = b, d1 = d1, d2 = d2,sided = sided,...)
+        cost.frame <- rbind(cost.frame,c(opt$par,wi,opt$value))
+      }
+      optimum <- cost.frame[which(cost.frame[,5]==min(cost.frame[,5])),]
+      names(optimum) <- c("Optimum h","Optimum k","Optimum n", "Optimum w","ECH")
+      colnames(cost.frame) <- c("Optimum h","Optimum k","Optimum n", "Optimum w","ECH")
+      rownames(cost.frame) <- rep("",length(w))
+      optEwma <- list(optimum=optimum, cost.frame=cost.frame)
     } else{
       cost.frame <- NULL
-      for(nk in n){
-        opt <- optim(par,.echEwma2,w=w,n=nk,delta = delta,lambda = lambda, P0 = P0, P1 = P1, C0 = C0, C1 = C1, Cr = Cr, Cf = Cf,T0 = T0, Tc = Tc,Tf = Tf,Tr = Tr, a = a, b = b, d1 = d1, d2 = d2,sided = sided,...)
-        cost.frame <- rbind(cost.frame,c(opt$par,nk,w,opt$value))
+      for(wi in w){
+        for(nk in n){
+          opt <- optim(par,.echEwma2,w=wi,n=nk,delta = delta,lambda = lambda, P0 = P0, P1 = P1, C0 = C0, C1 = C1, Cr = Cr, Cf = Cf,T0 = T0, Tc = Tc,Tf = Tf,Tr = Tr, a = a, b = b, d1 = d1, d2 = d2,sided = sided,...)
+          cost.frame <- rbind(cost.frame,c(opt$par,nk,wi,opt$value))
+        }
       }
+      optimum <- cost.frame[which(cost.frame[,5]==min(cost.frame[,5])),]
+      names(optimum) <- c("Optimum h","Optimum k","Optimum n", "Optimum w","ECH")
       colnames(cost.frame) <- c("Optimum h","Optimum k","Optimum n","Optimum w","ECH")
-      rownames(cost.frame) <- rep("",length(n))
-      optimum <- cost.frame[which(cost.frame[,4]==min(cost.frame[,4])),]
-      optEwma <- list(optimum=optimum,cost.frame=cost.frame)
+      rownames(cost.frame) <- rep("",length(n)*length(w))
+      optEwma <- list(optimum=optimum, cost.frame=cost.frame)
     }
   }else
    if( missing(w))
      stop("At least 'w' should be given!") else
-  if(missing(h) && missing(k) && missing(n)){
-    opt <- optim(c(1,3,5),.echEwma1,w=w,delta = delta,lambda = lambda, P0 = P0, P1 = P1, C0 = C0, C1 = C1, Cr = Cr, Cf = Cf,T0 = T0, Tc = Tc,Tf = Tf,Tr = Tr, a = a, b = b, d1 = d1, d2 = d2,sided = sided,...)
-    cat('The optimum parameters maybe around h=', opt$par[1],' k=', opt$par[2],' n=',opt$par[3],'when w=',w,' and the minimum ECH is about', opt$value,'\n')
-    optimum <- as.data.frame(t(c(opt$par,w,opt$value)))
-    colnames(optimum) <- c("Optimum h","Optimum k","Optimum n","Optimum w","ECH")
-    rownames(optimum) <- ""
-    optEwma <- list(optimum=optimum)
-  }else
+   if(missing(h) && missing(k) && missing(n)){
+     cost.frame <- NULL
+     for(wi in w){
+       opt <- optim(c(1,3,5),.echEwma1,w=wi,delta = delta,lambda = lambda, P0 = P0, P1 = P1, C0 = C0, C1 = C1, Cr = Cr, Cf = Cf,T0 = T0, Tc = Tc,Tf = Tf,Tr = Tr, a = a, b = b, d1 = d1, d2 = d2,sided = sided,...)
+       cost.frame <- rbind(cost.frame,c(opt$par,wi,opt$value))
+     }
+     optimum <- cost.frame[which(cost.frame[,5]==min(cost.frame[,5])),]
+     names(optimum) <- c("Optimum h","Optimum k","Optimum n", "Optimum w","ECH")
+     colnames(cost.frame) <- c("Optimum h","Optimum k","Optimum n", "Optimum w","ECH")
+     rownames(cost.frame) <- rep("",length(w))
+     optEwma <- list(optimum=optimum, cost.frame=cost.frame)
+   }else
    if(missing(h) && missing(k)){
-    cost.frame <- NULL
-    for(nk in n){
-      opt <- optim(c(1,3),.echEwma2,w=w,n=nk,delta = delta,lambda = lambda, P0 = P0, P1 = P1, C0 = C0, C1 = C1, Cr = Cr, Cf = Cf,T0 = T0, Tc = Tc,Tf = Tf,Tr = Tr, a = a, b = b, d1 = d1, d2 = d2,sided = sided,...)
-      cost.frame <- rbind(cost.frame,c(opt$par,nk,w,opt$value))
+     cost.frame <- NULL
+     for(wi in w){
+       for(nk in n){
+         opt <- optim(c(1,3),.echEwma2,w=wi,n=nk,delta = delta,lambda = lambda, P0 = P0, P1 = P1, C0 = C0, C1 = C1, Cr = Cr, Cf = Cf,T0 = T0, Tc = Tc,Tf = Tf,Tr = Tr, a = a, b = b, d1 = d1, d2 = d2,sided = sided,...)
+      cost.frame <- rbind(cost.frame,c(opt$par,nk,wi,opt$value))
+      }
     }
+     optimum <- cost.frame[which(cost.frame[,5]==min(cost.frame[,5])),]
+     names(optimum) <- c("Optimum h","Optimum k","Optimum n", "Optimum w","ECH")
     colnames(cost.frame) <- c("Optimum h","Optimum k","Optimum n","Optimum w","ECH")
-    rownames(cost.frame) <- rep("",length(n))
-    optimum <- cost.frame[which(cost.frame[,5]==min(cost.frame[,5])),]
+    rownames(cost.frame) <- rep("",length(n)*length(w))
     optEwma <- list(optimum=optimum,cost.frame=cost.frame)
   }else{
    cost.frame <- NULL
@@ -584,23 +708,24 @@ echCusum <- function(h,H,n,delta = 2,lambda = .01, P0 = NULL, P1 = NULL,C0 = NUL
        opt.mat[,j,i] = sapply(h,FUN=echEwma,w=w[j],k=k[i],n=n[1],delta = delta,lambda = lambda, P0 = P0, P1 = P1,C0 = C0,C1 = C1, Cr = Cr, Cf = Cf,T0 = T0,Tc = Tc, Tf = Tf, Tr = Tr, a = a, b = b,d1=d1,d2=d2,sided=sided)
    aa <- which(opt.mat==min(opt.mat),arr.ind=TRUE)
    opt.ech <- min(opt.mat)
-   cost.frame <- rbind(cost.frame,c(h[aa[1,1]],w[aa[1,2]],k[aa[1,3]],n[1],min(opt.mat)))
+   cost.frame <- rbind(cost.frame,c(h[aa[1,1]],k[aa[1,3]],n[1],w[aa[1,2]],min(opt.mat)))
    for(nk in n[-1]){
      mat <- array(NA,c(length(h),length(w),length(k)))
      for(i in 1:length(k))
        for(j in 1:length(w))
          mat[,j,i] = sapply(h,FUN=echEwma,w=w[j],k=k[i],n=nk,delta = delta,lambda = lambda, P0 = P0, P1 = P1,C0 = C0,C1 = C1, Cr = Cr, Cf = Cf,T0 = T0,Tc = Tc, Tf = Tf, Tr = Tr, a = a, b = b,d1=d1,d2=d2,sided=sided)
      aa <- which(mat==min(mat),arr.ind=TRUE)
-     cost.frame <- rbind(cost.frame,c(h[aa[1,1]],w[aa[1,2]],k[aa[1,3]],nk, ech <- min(mat)))
+     cost.frame <- rbind(cost.frame,c(h[aa[1,1]],k[aa[1,3]],nk, w[aa[1,2]],ech <- min(mat)))
      if(ech < opt.ech){
        opt.ech <- ech; opt.mat <- mat
      }
    }
-   colnames(cost.frame) <- c("Optimum h","Optimum w","Optimum k","n","ECH")
-   rownames(cost.frame) <- rep("",length(n))
    optimum <- cost.frame[which(cost.frame[,5]==min(cost.frame[,5])),]
-   mat.hk <- opt.mat[,which(w==optimum[2]),]
-   mat.hw <- opt.mat[,,which(k==optimum[3])]
+   names(optimum) <- c("Optimum h","Optimum k","Optimum n", "Optimum w","ECH")
+   colnames(cost.frame) <- c("Optimum h","Optimum k","n","Optimum w","ECH")
+   rownames(cost.frame) <- rep("",length(n))
+   mat.hk <- opt.mat[,which(w==optimum[4]),]
+   mat.hw <- opt.mat[,,which(k==optimum[2])]
    mat.wk <- opt.mat[which(h==optimum[1]),,]
    if(contour.plot){
      if(call.print){
@@ -613,24 +738,36 @@ echCusum <- function(h,H,n,delta = 2,lambda = .01, P0 = NULL, P1 = NULL,C0 = NUL
        points(optimum[1],optimum[2],pch=3)
        contour(w,k,mat.wk,xlab="w",ylab="k",nlevels=nlevels)
        points(optimum[2],optimum[3],pch=3)
-       mtext(sprintf('Opt h=%s   Opt w=%s   Opt k=%s   n=%s   ECH=%s',optimum[1], optimum[2], optimum[3],optimum[4],round(optimum[5],digits=4)),outer=T,line=.3,side=1)
+       mtext(sprintf('Opt h=%s   Opt w=%s   Opt k=%s   n=%s   ECH=%s',optimum[1], optimum[4], optimum[2], optimum[3], round(optimum[5], digits=4)),outer=T,line=.3,side=1)
        title(strwrap(paste("ecoEwma(",paste(names(ca),"=",unlist(ca),sep="",collapse=", "),")")),outer=T)
      } else{
        par(mfrow=c(2,2),mar=c(5.1,4.1,1.1,1.1),oma=c(2,0,1,0))
        contour(h,k,mat.hk,xlab="h",ylab="k",nlevels=nlevels)
-       points(optimum[1],optimum[3],pch=3)
-       contour(h,w,mat.hw,xlab="h",ylab="w",nlevels=nlevels)
        points(optimum[1],optimum[2],pch=3)
+       contour(h,w,mat.hw,xlab="h",ylab="w",nlevels=nlevels)
+       points(optimum[1],optimum[4],pch=3)
        contour(w,k,mat.wk,xlab="w",ylab="k",nlevels=nlevels)
-       points(optimum[2],optimum[3],pch=3)
-       mtext(sprintf('Opt h=%s   Opt w=%s   Opt k=%s   n=%s   ECH=%s',optimum[1], optimum[2], optimum[3],optimum[4],round(optimum[5],digits=4)),outer=T,line=.3,side=1)
+       points(optimum[4],optimum[2],pch=3)
+       mtext(sprintf('Opt h=%s   Opt w=%s   Opt k=%s   n=%s   ECH=%s',optimum[1], optimum[4], optimum[2],optimum[3],round(optimum[5],digits=4)),outer=T,line=.3,side=1)
      }
    }
    optEwma <- list(optimum=optimum,cost.frame=cost.frame,opt.mat=list(mat.hk=mat.hk,mat.hw=mat.hw,mat.wk=mat.wk))
  }
-   optEwma$call <- match.call()
-   return(structure(optEwma,class="edcc"))
- }
+  opth <- as.numeric(optEwma$optimum[1])
+  optk <- as.numeric(optEwma$optimum[2])
+  optn <- as.numeric(optEwma$optimum[3])
+  optw <- as.numeric(optEwma$optimum[4])
+  delta.std <- sqrt(as.numeric(optn))*delta
+  ARL1 <- as.numeric(xewma.arl(optw,optk,0,sided=sided))
+  ARL2 <- as.numeric(xewma.arl(optw,optk,delta.std,sided=sided))
+  s <- 1/(exp(lambda*opth)-1)
+  tau <- (1-(1+lambda*opth)*exp(-lambda*opth))/(lambda*(1-exp(-lambda*opth)))
+  optEwma$FAR <-  lambda*s/ARL1
+  optEwma$ATS <- ARL2*opth - tau
+  optEwma$call <- match.call()
+  return(structure(optEwma,class="edcc"))
+}
+
 
 ##' @rdname ecoEwma
 ##' @export
@@ -640,7 +777,7 @@ echEwma <- function(h,w,k,n,delta = 2,lambda = .05, P0 = NULL, P1 = NULL,C0 = NU
      ARL1 <- as.numeric(xewma.arl(w,k,0,sided=sided))
      ARL2 <- as.numeric(xewma.arl(w,k,delta.std,sided=sided))
      tau <- (1-(1+lambda*h)*exp(-lambda*h))/(lambda*(1-exp(-lambda*h)))
-     s <- exp(-lambda*h)/(1-exp(-lambda*h))
+     s <- 1/(exp(lambda*h)-1)
      if(!is.null(P0)&!is.null(P1)){
        ECT <- 1/lambda+(1-d1)*s*Tf/ARL1 - tau + n*T0 + h*ARL2 + Tc + Tr
        ECP <- P0/lambda + P1*(-tau+n*T0+h*ARL2+d1*Tc+d2*Tr) - s*Cf/ARL1 - Cr - (a+b*n)*(1/lambda-tau+n*T0+h*ARL2+d1*Tc+d2*Tr)/h
@@ -714,13 +851,16 @@ update.edcc <- function(object,...,evaluate=TRUE){
 ##' S3 method of contour plot for "edcc" class object
 ##' @title Contour plot of "edcc" class
 ##' @param x an object of "edcc" class
-##' @param call.print a logical value indicating whether the "call"
-##' should be printed on the contour plot. Default is TRUE
-##' @param ... arguments to be passed to contour plot, see \code{\link[graphics]{contour}} for details
+##' @param call.print a logical value indicating whether the the R
+##' command should be printed on the contour plot. Default is TRUE
+##' @param ... arguments to be passed to contour plot, see
+##' \code{\link[graphics]{contour}} for details
 ##' @return a contour plot
 ##' @S3method contour edcc
 ##' @method contour edcc
-##' @seealso \code{\link[graphics]{contour}}
+##' @seealso \code{\link{ecoXbar}}, \code{\link{ecoCusum}},
+##' \code{\link{ecoEwma}}, \code{\link{update.edcc}},
+##' \code{\link[graphics]{contour}}
 ##' @examples
 ##' x <- ecoXbar(h=seq(0.7,0.9,by=.01),L=seq(2.8,3.3,by=.01),n=4:6,P0=110,
 ##' P1=10,nlevels=50,contour.plot=TRUE)

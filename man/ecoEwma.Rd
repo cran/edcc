@@ -30,9 +30,11 @@
   \item{n}{sample size. It can be an integer vector or left
   undefined. See 'Details'}
 
-  \item{delta}{critical value: the extent of the shift when
-  assignable cause occurs. delta = |(mu1 - mu0)/sigma|.
-  Default value is 2.}
+  \item{delta}{shift in process mean in standard deviation
+  units when assignable cause occurs (delta = |mu1 -
+  mu0|/sigma), where sigma is the standard deviation of
+  observations; mu0 is the in-control process mean; mu1 is
+  the out-of-control process mean. Default value is 2.}
 
   \item{lambda}{we assume the in-control time follows a
   exponential distribution with mean 1/lambda. Default
@@ -99,8 +101,21 @@
   function.}
 }
 \value{
-  return the optimum parameters and the corresponding cost
-  value
+  The function returns a list of elements \code{optimum},
+  \code{cost.frame}, \code{FAR} and \code{ATS}.
+  \code{optimum} is a vector with the optimum parameters
+  and the corresponding ECH value; \code{cost.frame} is a
+  dataframe with the optimum parameters and the
+  corresponding ECH values for all given \code{n}(if
+  \code{n} is not specified, \code{cost.frame} won't be
+  returned); \code{FAR} indicates the false alarm rate
+  during the in-control time, which is calculated as
+  lambda*(average number of false alarm); \code{ATS}
+  indicates the average time to signal after the occurrence
+  of an assignable cause, calculated as h*ARL2 - tau, where
+  tau is the expected time of occurrence of the assignable
+  cause given it occurs between the i-th and (i+1)st
+  samples
 }
 \description{
   Calculate the optimum parameters, n(sample size),
@@ -111,11 +126,20 @@
 \details{
   Parameter \code{w} should always be given, because the
   range of \code{w} is so restricted that optimization
-  algorithms usually don't converge.  When parameters
-  \code{h}, \code{k}, \code{n} are all undefined,
-  \code{ecoEwma} function will try to find the global
-  optimum point to minimize the ECH (Expected Cost per
-  Hour) using optimization algorithms (\code{optim}
+  algorithms usually don't converge.
+
+  When parameter \code{par} is specified, optimization
+  algorithms would be used as default. \code{par} can be
+  specified as: \code{par = c(h, k)} where \code{h} and
+  \code{k} are the initial values of smapling interval and
+  control limit when \code{n} is specified; or \code{par =
+  c(h, k, n)}. Good inital values may lead to good optimum
+  results.
+
+  When parameters \code{h}, \code{k}, \code{n} are all
+  undefined, \code{ecoEwma} function will try to find the
+  global optimum point to minimize the ECH (Expected Cost
+  per Hour) using optimization algorithms (\code{optim}
   function), but in this case \code{n} would not be
   integer. It is usually helpful for the experimenter to
   find the region where the optimum point may exist
@@ -124,14 +148,14 @@
   function will try to find the optimum point for each
   \code{n} value using optimization algorithms. When
   \code{h}, \code{k} and \code{n} are all given,
-  \code{ecoEwma} function will use a "robust" way to
+  \code{ecoEwma} function will use a "grid method" way to
   calculate the optimum point, that is ECH for all the
   combinations of the parameters will be calculated. The
-  "robust" way is much slower than using optimization
+  "grid method" way is much slower than using optimization
   algorithms, but it would be a good choice when
   optimization algorithms fail to work well.
 
-  For cost parameters P0, P1 and C0, C1, only one pair is
+  For cost parameters either {P0, P1} or {C0, C1} is
   needed. If P0 and P1 are given, they will be used first,
   else C0 and C1 will be used.
 
@@ -141,16 +165,16 @@
 \examples{
 #Douglas (2009). Statistical quality control: a modern introduction, sixth edition, p470.
 ## Set w from 0.1 to 1 by 0.1 to catch the trend.
-y <- list()
-w <- seq(0.1,0.9,by=0.1)
-for(i in 1:length(w))
-y[[i]] <- ecoEwma(w=w[i],P0=110,P1=10,Cf=50)$optimum
-y <- do.call("rbind",y)
+ecoEwma(w=seq(0.1,1,by=0.1),P0=110,P1=10,Cf=50)
 #yy = ecoEwma( h=seq(.7,1,by=.01), w=seq(0.8,1,by=.01),k=seq(2.9,3.3,by=0.01),n=4:5,P0=110,P1=10,Cf=50,contour.plot=TRUE)
 ##$optimum
 ##Optimum h Optimum w Optimum k     n       ECH
 ##0.81000   0.95000   2.99000   5.00000  10.36482
 #contour(yy)
+}
+\references{
+  Lorenzen and Vance (1986). The economic design of control
+  charts: a unified approach, Technometrics, 28. 3-10.
 }
 \seealso{
   \code{\link{ecoXbar}}, \code{\link{ecoCusum}},
