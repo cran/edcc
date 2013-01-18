@@ -1,6 +1,6 @@
 \name{contour.edcc}
 \alias{contour.edcc}
-\title{Contour plot of "edcc" class}
+\title{Contour plot of an "edcc" class object}
 \usage{
   \method{contour}{edcc} (x, call.print = TRUE, ...)
 }
@@ -18,7 +18,7 @@
   a contour plot
 }
 \description{
-  contour plot of "edcc" class
+  contour plot of an "edcc" class object
 }
 \details{
   S3 method of contour plot for "edcc" class object

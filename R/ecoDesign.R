@@ -1,6 +1,6 @@
 ##' Calculate the optimum parameters, n(sample size), h(sampling
 ##' interval) and L(number of s.d. from control limits to center line)
-##' for Economic Design of X-bar control chart .
+##' for Economic Design of the X-bar control chart .
 ##'
 ##' When parameter \code{par} is specified, optimization algorithms
 ##' would be used as default. \code{par} can be specified as:
@@ -25,18 +25,19 @@
 ##' optimization algorithms, but it would be a good choice when
 ##' optimization algorithms fail to work well.
 ##'
-##' For cost parameters either {P0, P1} or {C0, C1} is needed.
-##' If P0 and P1 are given, they will be used first, else C0 and C1
-##' will be used.  For economic design of X-bar chart, only if the
-##' difference between P0 and P1 keeps the same, the results are
-##' identical. If the difference between C0 and C1 keeps the same, the
-##' optimum parameters are identical but the ECH(Expected Cost per
-##' Hour) values will change.
+##' For cost parameters either {P0, P1} or {C0, C1} is needed.  If P0
+##' and P1 are given, they will be used first, else C0 and C1 will be
+##' used.  For economic design of the X-bar chart, when \code{d1} and
+##' \code{d2} are both 1, only if the difference between P0 and P1
+##' keeps the same, the results are identical. If the difference
+##' between C0 and C1 keeps the same, the optimum parameters are
+##' almost the same but the ECH(Expected Cost per Hour) values will
+##' change.
 ##'
 ##' \code{echXbar} is used to calculate the ECH (Expected Cost per
-##' Hour) for a given design point
+##' Hour) for one given design point.
 ##' 
-##' @title Economic design for X-bar control chart
+##' @title Economic design for the X-bar control chart
 ##' @param h sampling interval. It can be a numeric vector or left
 ##' undefined. See 'Details'
 ##' @param L number of standard deviations from control limits to
@@ -47,7 +48,7 @@
 ##' @param lambda we assume the in-control time follows an exponential
 ##' distribution with mean 1/lambda. Default value is 0.05.
 ##' @param delta shift in process mean in standard deviation units
-##' when assignable cause occurs (delta = |mu1 - mu0|/sigma), where
+##' when assignable cause occurs (delta = (mu1 - mu0)/sigma), where
 ##' sigma is the standard deviation of observations; mu0 is the
 ##' in-control process mean; mu1 is the out-of-control process mean.
 ##' Default value is 2.
@@ -76,6 +77,10 @@
 ##' (1-yes, 0-no). Default value is 1.
 ##' @param nlevels number of contour levels desired. Default value is
 ##' 30. It works only when \code{contour.plot} is TRUE.
+##' @param sided distinguish between one- and two-sided X-bar chart by
+##' choosing ``one'' or ``two'' respectively.  When \code{sided =
+##' ``one''}, \code{delta > 0} means the control chart for detecting a
+##' positive shift, and vice versa. Default is ``two''.
 ##' @param par initial values for the parameters to be optimized
 ##' over. It can be a vector of length 2 or 3. See 'Details'
 ##' @param contour.plot a logical value indicating whether a contour
@@ -84,7 +89,8 @@
 ##' @param call.print a logical value indicating whether the "call"
 ##' should be printed on the contour plot. Default is TRUE
 ##' @param ... other arguments to be passed to \code{optim} function.
-##' @return The function returns a list of elements \code{optimum},
+##' @return The \code{ecoXbar} function returns an object of class
+##' "edcc", which is a list of elements \code{optimum},
 ##' \code{cost.frame}, \code{FAR} and \code{ATS}. \code{optimum} is a
 ##' vector with the optimum parameters and the corresponding ECH
 ##' value; \code{cost.frame} is a dataframe with the optimum
@@ -96,15 +102,21 @@
 ##' after the occurrence of an assignable cause, calculated as h*ARL2
 ##' - tau, where tau is the expected time of occurrence of the
 ##' assignable cause given it occurs between the i-th and (i+1)st
-##' samples
+##' samples.
+##' The \code{echXbar} function returns the calculated ECH value only.
 ##' @seealso \code{\link{ecoCusum}}, \code{\link{ecoEwma}},
 ##' \code{\link{contour}}, \code{\link[stats]{optim}},
 ##' \code{\link{update.edcc}}
-##' @references Douglas (2009). Statistical quality control: a modern
-##' introduction, sixth edition,  463-471.
+##' @references Weicheng Zhu, Changsoon Park (2013), {edcc: An R
+##' Package for the Economic Design of the Control Chart}. \emph{Journal
+##' of Statistical Software}, 52(9),
+##' 1-24. \url{http://www.jstatsoft.org/v52/i09/}
+##' 
+##' Douglas (2009). \emph{Statistical quality control: a modern
+##' introduction}, sixth edition,  463-471.
 ##' 
 ##' Lorenzen and Vance (1986). The economic design of control charts:
-##' a unified approach, Technometrics, 28. 3-10.
+##' a unified approach, \emph{Technometrics}, 28. 3-10.
 ##' @examples 
 ##' # Douglas (2009). Statistical quality control: a modern introduction, sixth edition, p470.
 ##' # In control profit per hour is 110, out of control profit per hour is 10
@@ -129,17 +141,17 @@
 ##' # update the parameters
 ##' update(x,P0=NULL,P1=NULL,C0=10,C1=110)
 ##' @export
-ecoXbar <- function(h, L, n, lambda = .05, delta = 2, P0 = NULL, P1 = NULL, C0 = NULL, C1 = NULL, Cr = 25, Cf = 50, T0 = 0.0167, Tc = 1, Tf = 0, Tr = 0, a = 1, b = .1, d1 = 1, d2 = 1, nlevels = 30, par = NULL, contour.plot = FALSE, call.print = TRUE, ...){
+ecoXbar <- function(h, L, n, delta = 2, lambda = .05, P0 = NULL, P1 = NULL, C0 = NULL, C1 = NULL, Cr = 25, Cf = 50, T0 = 0.0167, Tc = 1, Tf = 0, Tr = 0, a = 1, b = .1, d1 = 1, d2 = 1, nlevels = 30, sided = "two", par = NULL, contour.plot = FALSE, call.print = TRUE, ...){
   if(!is.null(par)){
     if(!is.vector(par)) stop("par should be a vector of length 2 or 3!") else
     if(!(length(par)==3 || length(par)==2)) stop("par should be a vector of length 2 or 3!") else
     if(length(par)==3){
-      opt <- optim(par,.echXbar1,lambda=lambda,delta=delta,P0=P0,P1=P1,C0=C0,C1=C1,Cr=Cr,Cf=Cf,T0=T0,Tc=Tc,Tf=Tf,Tr=Tr,a=a,b=b,d1=d1,d2=d2,...)
+      opt <- optim(par,.echXbar1,lambda=lambda,delta=delta,P0=P0,P1=P1,C0=C0,C1=C1,Cr=Cr,Cf=Cf,T0=T0,Tc=Tc,Tf=Tf,Tr=Tr,a=a,b=b,d1=d1,d2=d2,sided=sided,...)
       optimum <- as.data.frame(t(c(opt$par,opt$value)))
       gn <- round(as.numeric(optimum[3])) # global optimum of n
       cost.frame <- NULL
       for(k in c(gn-1, gn, gn+1)){
-        opt <- optim(par[1:2], .echXbar2,n=k,lambda=lambda,delta=delta,P0=P0,P1=P1,C0=C0,C1=C1,Cr=Cr,Cf=Cf,T0=T0,Tc=Tc,Tf=Tf,Tr=Tr,a=a,b=b,d1=d1,d2=d2,...)
+        opt <- optim(par[1:2], .echXbar2,n=k,lambda=lambda,delta=delta,P0=P0,P1=P1,C0=C0,C1=C1,Cr=Cr,Cf=Cf,T0=T0,Tc=Tc,Tf=Tf,Tr=Tr,a=a,b=b,d1=d1,d2=d2,sided=sided,...)
         cost.frame <- rbind(cost.frame,c(opt$par,k,opt$value))
       }
       optimum <- cost.frame[which(cost.frame[,4]==min(cost.frame[,4])),]
@@ -148,7 +160,7 @@ ecoXbar <- function(h, L, n, lambda = .05, delta = 2, P0 = NULL, P1 = NULL, C0 =
     } else{
       cost.frame <- NULL
       for(k in n){
-        opt <- optim(par,.echXbar2,n=k,lambda=lambda,delta=delta,P0=P0,P1=P1,C0=C0,C1=C1,Cr=Cr,Cf=Cf,T0=T0,Tc=Tc,Tf=Tf,Tr=Tr,a=a,b=b,d1=d1,d2=d2,...)
+        opt <- optim(par,.echXbar2,n=k,lambda=lambda,delta=delta,P0=P0,P1=P1,C0=C0,C1=C1,Cr=Cr,Cf=Cf,T0=T0,Tc=Tc,Tf=Tf,Tr=Tr,a=a,b=b,d1=d1,d2=d2,sided=sided,...)
         cost.frame <- rbind(cost.frame,c(opt$par,k,opt$value))
       }
       optimum <- cost.frame[which(cost.frame[,4]==min(cost.frame[,4])),]
@@ -159,13 +171,13 @@ ecoXbar <- function(h, L, n, lambda = .05, delta = 2, P0 = NULL, P1 = NULL, C0 =
     }
   }else
   if(missing(h) && missing(L) && missing(n)){
-    opt <- optim(c(1,3,5),.echXbar1,lambda=lambda,delta=delta,P0=P0,P1=P1,C0=C0,C1=C1,Cr=Cr,Cf=Cf,T0=T0,Tc=Tc,Tf=Tf,Tr=Tr,a=a,b=b,d1=d1,d2=d2,...)
+    opt <- optim(c(1,3,5),.echXbar1,lambda=lambda,delta=delta,P0=P0,P1=P1,C0=C0,C1=C1,Cr=Cr,Cf=Cf,T0=T0,Tc=Tc,Tf=Tf,Tr=Tr,a=a,b=b,d1=d1,d2=d2,sided=sided,...)
 #    cat('The optimum parameters maybe around h=', opt$par[1],' L=', opt$par[2],' n=', opt$par[3],' and the minimum ECH is about', opt$value,'\n')
     optimum <- as.data.frame(t(c(opt$par,opt$value)))
     gn <- round(as.numeric(optimum[3])) # global optimum of n
     cost.frame <- NULL
     for(k in c(gn-1, gn, gn+1)){
-      opt <- optim(c(1,3),.echXbar2,n=k,lambda=lambda,delta=delta,P0=P0,P1=P1,C0=C0,C1=C1,Cr=Cr,Cf=Cf,T0=T0,Tc=Tc,Tf=Tf,Tr=Tr,a=a,b=b,d1=d1,d2=d2,...)
+      opt <- optim(c(1,3),.echXbar2,n=k,delta=delta,lambda=lambda,P0=P0,P1=P1,C0=C0,C1=C1,Cr=Cr,Cf=Cf,T0=T0,Tc=Tc,Tf=Tf,Tr=Tr,a=a,b=b,d1=d1,d2=d2,sided=sided,...)
       cost.frame <- rbind(cost.frame,c(opt$par,n=k,opt$value))
     }
     optimum <- cost.frame[which(cost.frame[,4]==min(cost.frame[,4])),]
@@ -175,7 +187,7 @@ ecoXbar <- function(h, L, n, lambda = .05, delta = 2, P0 = NULL, P1 = NULL, C0 =
   if(missing(h) && missing(L)){
     cost.frame <- NULL
     for(k in n){
-      opt <- optim(c(1,3),.echXbar2,n=k,lambda=lambda,delta=delta,P0=P0,P1=P1,C0=C0,C1=C1,Cr=Cr,Cf=Cf,T0=T0,Tc=Tc,Tf=Tf,Tr=Tr,a=a,b=b,d1=d1,d2=d2,...)
+      opt <- optim(c(1,3),.echXbar2,n=k,delta=delta,lambda=lambda,P0=P0,P1=P1,C0=C0,C1=C1,Cr=Cr,Cf=Cf,T0=T0,Tc=Tc,Tf=Tf,Tr=Tr,a=a,b=b,d1=d1,d2=d2,sided=sided,...)
       cost.frame <- rbind(cost.frame,c(opt$par,n=k,opt$value))
     }
     optimum <- cost.frame[which(cost.frame[,4]==min(cost.frame[,4])),]
@@ -185,12 +197,12 @@ ecoXbar <- function(h, L, n, lambda = .05, delta = 2, P0 = NULL, P1 = NULL, C0 =
     optXbar <- list(optimum=optimum,cost.frame=cost.frame)
   }else{
     cost.frame <- NULL
-    opt.mat=outer(h,L,FUN=echXbar,n=n[1],lambda=lambda,delta=delta,P0=P0,P1=P1,C0=C0,C1=C1,Cr=Cr,Cf=Cf,T0=T0,Tc=Tc,Tf=Tf,Tr=Tr,a=a,b=b,d1=d1,d2=d2)
+    opt.mat=outer(h,L,FUN=echXbar,n=n[1],delta=delta,lambda=lambda,P0=P0,P1=P1,C0=C0,C1=C1,Cr=Cr,Cf=Cf,T0=T0,Tc=Tc,Tf=Tf,Tr=Tr,a=a,b=b,d1=d1,d2=d2,sided=sided)
     aa <- which(opt.mat==min(opt.mat),arr.ind=TRUE)
     opt.ech <- min(opt.mat)
     cost.frame <- rbind(cost.frame,c(h[aa[1,1]],L[aa[1,2]],n[1],opt.ech))
     for(k in n[-1]){
-      mat=outer(h,L,FUN=echXbar,n=k,lambda=lambda,delta=delta,P0=P0,P1=P1,C0=C0,C1=C1,Cr=Cr,Cf=Cf,T0=T0,Tc=Tc,Tf=Tf,Tr=Tr,a=a,b=b,d1=d1,d2=d2)
+      mat=outer(h,L,FUN=echXbar,n=k,delta=delta,lambda=lambda,P0=P0,P1=P1,C0=C0,C1=C1,Cr=Cr,Cf=Cf,T0=T0,Tc=Tc,Tf=Tf,Tr=Tr,a=a,b=b,d1=d1,d2=d2,sided=sided)
       aa <- which(mat==min(mat),arr.ind=TRUE)
       cost.frame <- rbind(cost.frame,c(h[aa[1,1]],L[aa[1,2]],k, ech <- min(mat)))
       if(ech < opt.ech){
@@ -221,10 +233,17 @@ ecoXbar <- function(h, L, n, lambda = .05, delta = 2, P0 = NULL, P1 = NULL, C0 =
   opth <- as.numeric(optXbar$optimum[1])
   optL <- as.numeric(optXbar$optimum[2])
   optn <- as.numeric(optXbar$optimum[3])
-  alpha <- 2*pnorm(-optL)
-  beta <- pnorm(optL-delta*sqrt(optn))-pnorm(-optL-delta*sqrt(optn))
-  ARL1 <- 1/alpha
-  ARL2 <- 1/(1-beta)
+
+  if(sided == "one"){
+      ARL1 <- 1/pnorm(-optL)
+      ARL2 <- 1/pnorm(-optL + abs(delta*sqrt(optn)))
+    }
+  if(sided == "two"){
+      alpha <- 2*pnorm(-optL)
+      beta <- pnorm(optL - delta*sqrt(optn))-pnorm(-optL- delta*sqrt(optn))
+      ARL1 <- 1/alpha
+      ARL2 <- 1/(1-beta)
+    }
   s <- 1/(exp(lambda*opth)-1)
   tau <- (1-(1+lambda*opth)*exp(-lambda*opth))/(lambda*(1-exp(-lambda*opth)))
   optXbar$FAR <- lambda*s/ARL1
@@ -235,11 +254,18 @@ ecoXbar <- function(h, L, n, lambda = .05, delta = 2, P0 = NULL, P1 = NULL, C0 =
 ##' @rdname ecoXbar
 ##' @export
 # calculate the ECH for given parameters
-echXbar <- function(h,L,n,lambda=.05,delta=2,P0=NULL,P1=NULL,C0=NULL,C1=NULL,Cr=25,Cf=50,T0=0.0167,Tc=1,Tf=0,Tr=0,a=1,b=.1,d1=1,d2=1){
-  alpha <- 2*pnorm(-L)
-  beta <- pnorm(L-delta*sqrt(n))-pnorm(-L-delta*sqrt(n))
-  ARL1 <- 1/alpha
-  ARL2 <- 1/(1-beta)
+echXbar <- function(h,L,n,delta=2,lambda=.05,P0=NULL,P1=NULL,C0=NULL,C1=NULL,Cr=25,Cf=50,T0=0.0167,Tc=1,Tf=0,Tr=0,a=1,b=.1,d1=1,d2=1, sided = "two"){
+  delta.std <- delta*sqrt(n)
+  if(sided == "one"){
+    ARL1 <- 1/pnorm(-L)
+    ARL2 <- 1/pnorm(-L + abs(delta.std))
+  }
+  if(sided == "two"){
+    alpha <- 2*pnorm(-L)
+    beta <- pnorm(L - delta.std)-pnorm(- L- delta.std)
+    ARL1 <- 1/alpha
+    ARL2 <- 1/(1-beta)
+  }
   tau <- (1-(1+lambda*h)*exp(-lambda*h))/(lambda*(1-exp(-lambda*h)))
   s <- 1/(exp(lambda*h)-1)
   if(!is.null(P0)&!is.null(P1)){
@@ -260,7 +286,7 @@ echXbar <- function(h,L,n,lambda=.05,delta=2,P0=NULL,P1=NULL,C0=NULL,C1=NULL,Cr=
 
 ##' Calculate the optimum parameters of n(sample size), h(sampling
 ##' interval), k(reference value) and H(decision interval) for
-##' Economic Design of Cusum control chart. For more information about
+##' Economic Design of the CUSUM control chart. For more information about
 ##' the reference value see 'Details'.
 ##'
 ##' When parameter \code{par} is specified, optimization algorithms
@@ -291,14 +317,20 @@ echXbar <- function(h,L,n,lambda=.05,delta=2,P0=NULL,P1=NULL,C0=NULL,C1=NULL,Cr=
 ##' is chosen mid-way the between AQL and the RQL: $k = mu0 +
 ##' 0.5*delta*sigma (Appl. Statist.(1974) 23, No. 3, p. 420). For this
 ##' reason we treat k as a constant value and optimize n, h and H.
-##' For cost parameters either {P0, P1} or {C0, C1} is needed.
-##' If P0 and P1 are given, they will be used first, else C0 and C1
-##' will be used.
+##' For cost parameters either {P0, P1} or {C0, C1} is needed.  If P0
+##' and P1 are given, they will be used first, else C0 and C1 will be
+##' used. For economic design of the CUSUM chart, when \code{d1} and
+##' \code{d2} are both 1, only if the difference between P0 and P1
+##' keeps the same, the results are identical. If the difference
+##' between C0 and C1 keeps the same, the optimum parameters are
+##' almost the same but the ECH(Expected Cost per Hour) values will
+##' change.
+
 ##'
 ##' \code{echCusum} is used to calculate the ECH (Expected Cost per
-##' Hour) for a given design point
+##' Hour) for one given design point.
 ##' 
-##' @title Economic design for Cusum control chart
+##' @title Economic design for the CUSUM control chart
 ##' @param h sampling interval. It can be a numeric vector or left
 ##' undefined. See 'Details'
 ##' @param H decision interval. It can be a numeric vector or left
@@ -346,8 +378,9 @@ echXbar <- function(h,L,n,lambda=.05,delta=2,P0=NULL,P1=NULL,C0=NULL,C1=NULL,Cr=
 ##' plot should be drawn. Default is FALSE.
 ##' @param call.print a logical value indicating whether the "call"
 ##' should be printed on the contour plot. Default is TRUE
-##' @param ... other arguments to be passed to \code{optim} function..
-##' @return The function returns a list of elements \code{optimum},
+##' @param ... other arguments to be passed to \code{optim} function.
+##' @return The \code{ecoCusum} function returns an object of class
+##' "edcc", which is a list of elements \code{optimum},
 ##' \code{cost.frame}, \code{FAR} and \code{ATS}. \code{optimum} is a
 ##' vector with the optimum parameters and the corresponding ECH
 ##' value; \code{cost.frame} is a dataframe with the optimum
@@ -359,15 +392,22 @@ echXbar <- function(h,L,n,lambda=.05,delta=2,P0=NULL,P1=NULL,C0=NULL,C1=NULL,Cr=
 ##' after the occurrence of an assignable cause, calculated as h*ARL2
 ##' - tau, where tau is the expected time of occurrence of the
 ##' assignable cause given it occurs between the i-th and (i+1)st
-##' samples
+##' samples.
+##' The \code{echCusum} function returns the calculated ECH value only.
 ##' @seealso \code{\link{ecoXbar}}, \code{\link{ecoEwma}},
 ##' \code{\link[spc]{xcusum.arl}}, \code{\link[stats]{optim}},
 ##' \code{\link{update.edcc}}, \code{\link{contour}}
-##' @references Lorenzen and Vance (1986). The economic design of
-##' control charts: a unified approach, Technometrics, 28. 3-10.
+##' @references Weicheng Zhu, Changsoon Park (2013), {edcc: An R
+##' Package for the Economic Design of the Control
+##' Chart}. \emph{Journal of Statistical Software}, 52(9),
+##' 1-24. \url{http://www.jstatsoft.org/v52/i09/}
+##'
+##' Lorenzen and Vance (1986). The economic design of
+##' control charts: a unified approach, \emph{Technometrics}, 28. 3-10.
 ##' 
 ##' Chiu, W.K. (1974). The economic design of CUSUM charts for
-##' controlling normal means, 
+##' controlling normal means, \emph{Journal of the Royal Statistical
+##' Society. Series C (Applied Statistics)}, 23(3), 420-433.
 ##' @examples
 ##' #Chiu, W.K. (1974). Applied Statistics, 23, p427 Table3, row 1-2,14
 ##' ## LINE 1
@@ -393,7 +433,7 @@ echXbar <- function(h,L,n,lambda=.05,delta=2,P0=NULL,P1=NULL,C0=NULL,C1=NULL,Cr=
 ##' ecoCusum(h=seq(0.75,0.85,by=.01),H=seq(.55,0.65,by=.01),n=4:6,lambda=.05,
 ##' P0=110,P1=10,Cr=25,Cf=50,Tr=0,Tf=0,Tc=1,T0=.0167,a=1)
 ##' @export
-ecoCusum <- function( h, H,n,delta = 2,lambda = .01, P0 = NULL, P1 = NULL,C0 = NULL,C1 = NULL, Cr = 20, Cf = 10,T0 = 0, Tc = .1,Tf = .1,Tr = 0.2, a = .5, b = .1, d1 = 1, d2 = 1, nlevels=30,sided = "one", par=NULL, contour.plot=FALSE,call.print=TRUE,...){
+ecoCusum <- function( h, H,n,delta = 2,lambda = .01, P0 = NULL, P1 = NULL,C0 = NULL,C1 = NULL, Cr = 20, Cf = 10,T0 = 0, Tc = .1,Tf = .1,Tr = 0.2, a = .5, b = .1, d1 = 1, d2 = 1, nlevels=30, sided = "one", par=NULL, contour.plot=FALSE, call.print=TRUE,...){
     if(!is.null(par)){
       if(!is.vector(par)) stop("par should be a vector of length 2 or 3!") else
       if(!(length(par)==3 || length(par)==2)) stop("par should be a vector of length 2 or 3!") else
@@ -528,7 +568,7 @@ echCusum <- function(h,H,n,delta = 2,lambda = .01, P0 = NULL, P1 = NULL,C0 = NUL
 ##' Calculate the optimum parameters, n(sample size), h(sampling
 ##' interval), w(weight to the present sample) and k(number of
 ##' s.d. from control limits to center line) for economic Design of
-##' EWMA control chart .
+##' the EWMA control chart .
 ##' 
 ##' Parameter \code{w} should always be given, because the range of
 ##' \code{w} is so restricted that optimization algorithms usually
@@ -557,14 +597,20 @@ echCusum <- function(h,H,n,delta = 2,lambda = .01, P0 = NULL, P1 = NULL,C0 = NUL
 ##' than using optimization algorithms, but it would be a good choice
 ##' when optimization algorithms fail to work well.
 ##' 
-##' For cost parameters either {P0, P1} or {C0, C1} is needed.
-##' If P0 and P1 are given, they will be used first, else C0 and C1
-##' will be used.
+##' For cost parameters either {P0, P1} or {C0, C1} is needed.  If P0
+##' and P1 are given, they will be used first, else C0 and C1 will be
+##' used.  For economic design of the EWMA chart, when \code{d1} and
+##' \code{d2} are both 1, only if the difference between P0 and P1
+##' keeps the same, the results are identical. If the difference
+##' between C0 and C1 keeps the same, the optimum parameters are
+##' almost the same but the ECH(Expected Cost per Hour) values will
+##' change.
+
 ##'
 ##' \code{echEwma} is used to calculate the ECH (Expected Cost per
-##' Hour) for a given design point
+##' Hour) for one given design point.
 ##' 
-##' @title Economic design for EWMA control chart
+##' @title Economic design for the EWMA control chart
 ##' @param h sampling interval. It can be a numeric vector or left
 ##' undefined. See 'Details'
 ##' @param w the weight value between 0 and 1 given to the latest
@@ -615,7 +661,8 @@ echCusum <- function(h,H,n,delta = 2,lambda = .01, P0 = NULL, P1 = NULL,C0 = NUL
 ##' @param call.print a logical value indicating whether the "call"
 ##' should be printed on the contour plot. Default is TRUE
 ##' @param ... other arguments to be passed to contour function.
-##' @return The function returns a list of elements \code{optimum},
+##' @return The \code{ecoEwma} function returns an object of class
+##' "edcc", which is a list of elements \code{optimum},
 ##' \code{cost.frame}, \code{FAR} and \code{ATS}. \code{optimum} is a
 ##' vector with the optimum parameters and the corresponding ECH
 ##' value; \code{cost.frame} is a dataframe with the optimum
@@ -627,23 +674,30 @@ echCusum <- function(h,H,n,delta = 2,lambda = .01, P0 = NULL, P1 = NULL,C0 = NUL
 ##' after the occurrence of an assignable cause, calculated as h*ARL2
 ##' - tau, where tau is the expected time of occurrence of the
 ##' assignable cause given it occurs between the i-th and (i+1)st
-##' samples
+##' samples.
+##' The \code{echEwma} function returns the calculated ECH value only.
 ##' @seealso \code{\link{ecoXbar}}, \code{\link{ecoCusum}},
 ##' \code{\link[spc]{xewma.arl}}, \code{\link{update.edcc}},
 ##' \code{\link[stats]{optim}},\code{\link{contour}}
-##' @references Lorenzen and Vance (1986). The economic design of
-##' control charts: a unified approach, Technometrics, 28. 3-10.
+##' @references Weicheng Zhu, Changsoon Park (2013), {edcc: An R
+##' Package for the Economic Design of the Control
+##' Chart}. \emph{Journal of Statistical Software}, 52(9),
+##' 1-24. \url{http://www.jstatsoft.org/v52/i09/}
+##'
+##' Lorenzen and Vance (1986). The economic design of
+##' control charts: a unified approach, \emph{Technometrics}, 28. 3-10.
 ##' @examples
 ##' #Douglas (2009). Statistical quality control: a modern introduction, sixth edition, p470.
 ##' ## Set w from 0.1 to 1 by 0.1 to catch the trend.
 ##' ecoEwma(w=seq(0.1,1,by=0.1),P0=110,P1=10,Cf=50)
-##' #yy = ecoEwma( h=seq(.7,1,by=.01), w=seq(0.8,1,by=.01),k=seq(2.9,3.3,by=0.01),n=4:5,P0=110,P1=10,Cf=50,contour.plot=TRUE)
+##' #yy = ecoEwma(h = seq(.7,1,by=.01), w = seq(0.8,1,by=.01),k = seq(2.9,3.3, by = 0.01), n = 4:5, P0 = 110, P1 = 10, Cf = 50, contour.plot = TRUE)
+##' 
 ##' ##$optimum
-##' ##Optimum h Optimum w Optimum k     n       ECH
-##' ##0.81000   0.95000   2.99000   5.00000  10.36482 
+##' ##Optimum h Optimum k Optimum n Optimum w       ECH 
+##' ##  0.81000   2.99000   5.00000   0.95000  10.36482 
 ##' #contour(yy)
 ##' @export
-ecoEwma <- function( h=seq(.7,1,by=.1), w=seq(0.7,1,by=.1),k=seq(2,4,by=0.1),n=4:8,delta = 2,lambda = .05, P0 = NULL, P1 = NULL,C0 = NULL,C1 = NULL, Cr = 25, Cf = 10,T0 = 0.0167,Tc = 1, Tf = 0, Tr = 0, a = 1, b = .1,d1=1,d2=1, nlevels=30, sided="two",par=NULL,contour.plot=FALSE,call.print=TRUE,...){
+ecoEwma <- function( h, w, k, n, delta = 2,lambda = .05, P0 = NULL, P1 = NULL,C0 = NULL,C1 = NULL, Cr = 25, Cf = 10,T0 = 0.0167,Tc = 1, Tf = 0, Tr = 0, a = 1, b = .1,d1=1,d2=1, nlevels=30, sided="two",par=NULL,contour.plot=FALSE,call.print=TRUE,...){
   if(!is.null(par)){
     if(!is.vector(par)) stop("par should be a vector of length 2 or 3!") else
     if(!(length(par)==2 || length(par)==3)) stop("par should be a vector of length 2 or 3!") else
@@ -792,18 +846,8 @@ echEwma <- function(h,w,k,n,delta = 2,lambda = .05, P0 = NULL, P1 = NULL,C0 = NU
      return(ECH)
    }
 
-##' Print a "edcc" class object
-##'
-##' Print the optimum parameters of a "edcc" object
-##' @title Print a "edcc" class object
-##' @param x an object of class "edcc"
-##' @param ... not used in this function
-##' @return Invisible, the object itself.
-##' @export
 ##' @S3method print edcc
 ##' @method print edcc
-##' @examples x <- ecoXbar(P0=100,P1=0,nlevels=50)
-##' print(x)
 print.edcc <- function(x,...){
   xx <- x
   xx$opt.mat <- NULL
@@ -817,7 +861,7 @@ print.edcc <- function(x,...){
 ##' call and (by default) evaluating that call. 
 ##'
 ##' S3 method for update.
-##' @title Update for a "edcc" class object
+##' @title Update for an "edcc" class object
 ##' @param object an object of "edcc" class
 ##' @param ... additional arguments to the call, or arguments with
 ##'anged values.
@@ -846,10 +890,10 @@ update.edcc <- function(object,...,evaluate=TRUE){
 }
 
 
-##' contour plot of "edcc" class
+##' contour plot of an "edcc" class object
 ##'
 ##' S3 method of contour plot for "edcc" class object
-##' @title Contour plot of "edcc" class
+##' @title Contour plot of an "edcc" class object
 ##' @param x an object of "edcc" class
 ##' @param call.print a logical value indicating whether the the R
 ##' command should be printed on the contour plot. Default is TRUE
@@ -874,7 +918,11 @@ contour.edcc <- function(x,call.print=TRUE,...){
     L <- call[["L"]]
     nlevels <- call[["nlevels"]]
     if(is.null(nlevels)) nlevels <- 30
-    if(missing(call.print)) call.print <- TRUE
+    if(missing(call.print)){
+      call.print <- call[["call.print"]]
+      if(is.null(call.print))
+        call.print <- TRUE
+    }
     opt.mat <- x$opt.mat
     call1 <- list(quote(contour.default),h,L,quote(opt.mat),nlevels=nlevels,xlab="h",ylab="L")
     if (length(extras)) {
@@ -903,7 +951,11 @@ contour.edcc <- function(x,call.print=TRUE,...){
       H <- call[["H"]]
       nlevels <- call[["nlevels"]]
       if(is.null(nlevels)) nlevels <- 30
-      if(missing(call.print)) call.print <- TRUE
+      if(missing(call.print)){
+        call.print <- call[["call.print"]]
+        if(is.null(call.print))
+          call.print <- TRUE
+      }
       opt.mat <- x$opt.mat
       call1 <- list(quote(contour.default),h,H,quote(opt.mat),nlevels=nlevels,xlab="h",ylab="H")
       if (length(extras)) {
@@ -933,7 +985,11 @@ contour.edcc <- function(x,call.print=TRUE,...){
     k <- call[["k"]]
     nlevels <- call[["nlevels"]]
     if(is.null(nlevels)) nlevels <- 30
-    if(missing(call.print)) call.print <- TRUE
+    if(missing(call.print)){
+      call.print <- call[["call.print"]]
+      if(is.null(call.print))
+        call.print <- TRUE
+    }
     opt.mat <- x$opt.mat
     call1 <- list(quote(contour.default),h,k,quote(opt.mat$mat.hk),nlevels=nlevels,xlab="h",ylab="k")
     call2 <- list(quote(contour.default),h,w,quote(opt.mat$mat.hw),nlevels=nlevels,xlab="h",ylab="w")

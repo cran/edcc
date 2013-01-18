@@ -1,5 +1,5 @@
 Package: edcc
-Version: 0.2-3
+Version: 1.0-0
 Title: Economic Design of Control Charts
 Author: Weicheng Zhu, Changsoon Park
 Maintainer: Weicheng Zhu <weicheng@dreamhunter.me>
@@ -10,6 +10,6 @@ Description: This package provides a unified approach for Economic
         (Expected Cost per Hour) of the process.
 License: GPL
 Collate: 'ecoDesign.R' 'internal.R'
-Packaged: 2012-03-30 03:02:14 UTC; weicheng
+Packaged: 2013-01-18 04:54:24 UTC; weicheng
 Repository: CRAN
-Date/Publication: 2012-03-30 04:41:32
+Date/Publication: 2013-01-18 07:17:47

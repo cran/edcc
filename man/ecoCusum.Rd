@@ -1,7 +1,7 @@
 \name{ecoCusum}
 \alias{echCusum}
 \alias{ecoCusum}
-\title{Economic design for Cusum control chart}
+\title{Economic design for the CUSUM control chart}
 \usage{
   ecoCusum(h, H, n, delta = 2, lambda = 0.01, P0 = NULL,
     P1 = NULL, C0 = NULL, C1 = NULL, Cr = 20, Cf = 10,
@@ -93,10 +93,11 @@
   TRUE}
 
   \item{...}{other arguments to be passed to \code{optim}
-  function..}
+  function.}
 }
 \value{
-  The function returns a list of elements \code{optimum},
+  The \code{ecoCusum} function returns an object of class
+  "edcc", which is a list of elements \code{optimum},
   \code{cost.frame}, \code{FAR} and \code{ATS}.
   \code{optimum} is a vector with the optimum parameters
   and the corresponding ECH value; \code{cost.frame} is a
@@ -110,13 +111,15 @@
   of an assignable cause, calculated as h*ARL2 - tau, where
   tau is the expected time of occurrence of the assignable
   cause given it occurs between the i-th and (i+1)st
-  samples
+  samples. The \code{echCusum} function returns the
+  calculated ECH value only.
 }
 \description{
   Calculate the optimum parameters of n(sample size),
   h(sampling interval), k(reference value) and H(decision
-  interval) for Economic Design of Cusum control chart. For
-  more information about the reference value see 'Details'.
+  interval) for Economic Design of the CUSUM control chart.
+  For more information about the reference value see
+  'Details'.
 }
 \details{
   When parameter \code{par} is specified, optimization
@@ -152,12 +155,17 @@
   the RQL: $k = mu0 + 0.5*delta*sigma (Appl. Statist.(1974)
   23, No. 3, p. 420). For this reason we treat k as a
   constant value and optimize n, h and H. For cost
-  parameters either {P0, P1} or {C0, C1} is needed. If P0
+  parameters either {P0, P1} or {C0, C1} is needed.  If P0
   and P1 are given, they will be used first, else C0 and C1
-  will be used.
+  will be used. For economic design of the CUSUM chart,
+  when \code{d1} and \code{d2} are both 1, only if the
+  difference between P0 and P1 keeps the same, the results
+  are identical. If the difference between C0 and C1 keeps
+  the same, the optimum parameters are almost the same but
+  the ECH(Expected Cost per Hour) values will change.
 
   \code{echCusum} is used to calculate the ECH (Expected
-  Cost per Hour) for a given design point
+  Cost per Hour) for one given design point.
 }
 \examples{
 #Chiu, W.K. (1974). Applied Statistics, 23, p427 Table3, row 1-2,14
@@ -185,11 +193,19 @@ ecoCusum(h=seq(0.75,0.85,by=.01),H=seq(.55,0.65,by=.01),n=4:6,lambda=.05,
 P0=110,P1=10,Cr=25,Cf=50,Tr=0,Tf=0,Tc=1,T0=.0167,a=1)
 }
 \references{
+  Weicheng Zhu, Changsoon Park (2013), {edcc: An R Package
+  for the Economic Design of the Control Chart}.
+  \emph{Journal of Statistical Software}, 52(9), 1-24.
+  \url{http://www.jstatsoft.org/v52/i09/}
+
   Lorenzen and Vance (1986). The economic design of control
-  charts: a unified approach, Technometrics, 28. 3-10.
+  charts: a unified approach, \emph{Technometrics}, 28.
+  3-10.
 
   Chiu, W.K. (1974). The economic design of CUSUM charts
-  for controlling normal means,
+  for controlling normal means, \emph{Journal of the Royal
+  Statistical Society. Series C (Applied Statistics)},
+  23(3), 420-433.
 }
 \seealso{
   \code{\link{ecoXbar}}, \code{\link{ecoEwma}},

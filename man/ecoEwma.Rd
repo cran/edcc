@@ -1,11 +1,9 @@
 \name{ecoEwma}
 \alias{echEwma}
 \alias{ecoEwma}
-\title{Economic design for EWMA control chart}
+\title{Economic design for the EWMA control chart}
 \usage{
-  ecoEwma(h = seq(0.7, 1, by = 0.1),
-    w = seq(0.7, 1, by = 0.1), k = seq(2, 4, by = 0.1),
-    n = 4:8, delta = 2, lambda = 0.05, P0 = NULL,
+  ecoEwma(h, w, k, n, delta = 2, lambda = 0.05, P0 = NULL,
     P1 = NULL, C0 = NULL, C1 = NULL, Cr = 25, Cf = 10,
     T0 = 0.0167, Tc = 1, Tf = 0, Tr = 0, a = 1, b = 0.1,
     d1 = 1, d2 = 1, nlevels = 30, sided = "two",
@@ -101,7 +99,8 @@
   function.}
 }
 \value{
-  The function returns a list of elements \code{optimum},
+  The \code{ecoEwma} function returns an object of class
+  "edcc", which is a list of elements \code{optimum},
   \code{cost.frame}, \code{FAR} and \code{ATS}.
   \code{optimum} is a vector with the optimum parameters
   and the corresponding ECH value; \code{cost.frame} is a
@@ -115,13 +114,14 @@
   of an assignable cause, calculated as h*ARL2 - tau, where
   tau is the expected time of occurrence of the assignable
   cause given it occurs between the i-th and (i+1)st
-  samples
+  samples. The \code{echEwma} function returns the
+  calculated ECH value only.
 }
 \description{
   Calculate the optimum parameters, n(sample size),
   h(sampling interval), w(weight to the present sample) and
   k(number of s.d. from control limits to center line) for
-  economic Design of EWMA control chart .
+  economic Design of the EWMA control chart .
 }
 \details{
   Parameter \code{w} should always be given, because the
@@ -156,25 +156,38 @@
   optimization algorithms fail to work well.
 
   For cost parameters either {P0, P1} or {C0, C1} is
-  needed. If P0 and P1 are given, they will be used first,
-  else C0 and C1 will be used.
+  needed.  If P0 and P1 are given, they will be used first,
+  else C0 and C1 will be used.  For economic design of the
+  EWMA chart, when \code{d1} and \code{d2} are both 1, only
+  if the difference between P0 and P1 keeps the same, the
+  results are identical. If the difference between C0 and
+  C1 keeps the same, the optimum parameters are almost the
+  same but the ECH(Expected Cost per Hour) values will
+  change.
 
   \code{echEwma} is used to calculate the ECH (Expected
-  Cost per Hour) for a given design point
+  Cost per Hour) for one given design point.
 }
 \examples{
 #Douglas (2009). Statistical quality control: a modern introduction, sixth edition, p470.
 ## Set w from 0.1 to 1 by 0.1 to catch the trend.
 ecoEwma(w=seq(0.1,1,by=0.1),P0=110,P1=10,Cf=50)
-#yy = ecoEwma( h=seq(.7,1,by=.01), w=seq(0.8,1,by=.01),k=seq(2.9,3.3,by=0.01),n=4:5,P0=110,P1=10,Cf=50,contour.plot=TRUE)
+#yy = ecoEwma(h = seq(.7,1,by=.01), w = seq(0.8,1,by=.01),k = seq(2.9,3.3, by = 0.01), n = 4:5, P0 = 110, P1 = 10, Cf = 50, contour.plot = TRUE)
+
 ##$optimum
-##Optimum h Optimum w Optimum k     n       ECH
-##0.81000   0.95000   2.99000   5.00000  10.36482
+##Optimum h Optimum k Optimum n Optimum w       ECH
+##  0.81000   2.99000   5.00000   0.95000  10.36482
 #contour(yy)
 }
 \references{
+  Weicheng Zhu, Changsoon Park (2013), {edcc: An R Package
+  for the Economic Design of the Control Chart}.
+  \emph{Journal of Statistical Software}, 52(9), 1-24.
+  \url{http://www.jstatsoft.org/v52/i09/}
+
   Lorenzen and Vance (1986). The economic design of control
-  charts: a unified approach, Technometrics, 28. 3-10.
+  charts: a unified approach, \emph{Technometrics}, 28.
+  3-10.
 }
 \seealso{
   \code{\link{ecoXbar}}, \code{\link{ecoCusum}},

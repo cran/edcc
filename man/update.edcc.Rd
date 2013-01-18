@@ -1,6 +1,6 @@
 \name{update.edcc}
 \alias{update.edcc}
-\title{Update for a "edcc" class object}
+\title{Update for an "edcc" class object}
 \usage{
   \method{update}{edcc} (object, ..., evaluate = TRUE)
 }

@@ -1,0 +1,20 @@
+citHeader("To cite edcc in publications use:")
+
+citEntry(entry = "Article",
+  title        = "{edcc}: An {R} Package for the Economic Design of the Control Chart",
+  author       = personList(as.person("Weicheng Zhu"),
+                   as.person("Changsoon Park")),
+  journal      = "Journal of Statistical Software",
+  year         = "2013",
+  volume       = "52",
+  number       = "9",
+  pages        = "1--24",
+  url          = "http://www.jstatsoft.org/v52/i09/",
+
+  textVersion  =
+  paste("Weicheng Zhu, Changsoon Park (2013).",
+        "edcc: An R Package for the Economic Design of the Control Chart.",
+        "Journal of Statistical Software, 52(9), 1-24.",
+        "URL http://www.jstatsoft.org/v52/i09/.")
+)
+

@@ -1,9 +1,16 @@
-  .echXbar1 <- function(x,lambda=.05,delta=2,P0=NULL,P1=NULL,C0=NULL,C1=NULL,Cr=25,Cf=50,T0=0.0167,Tc=1,Tf=0,Tr=0,a=1,b=.1,d1=1,d2=1){
+  .echXbar1 <- function(x,delta=2,lambda=.05,P0=NULL,P1=NULL,C0=NULL,C1=NULL,Cr=25,Cf=50,T0=0.0167,Tc=1,Tf=0,Tr=0,a=1,b=.1,d1=1,d2=1, sided = "two"){
     h <- x[1]; L <- x[2]; n <- x[3]
-    alpha <- 2*pnorm(-L)
-    beta <- pnorm(L-delta*sqrt(n))-pnorm(-L-delta*sqrt(n))
-    ARL1 <- 1/alpha
-    ARL2 <- 1/(1-beta)
+    delta.std <- delta*sqrt(n)
+    if(sided == "one"){
+      ARL1 <- 1/pnorm(-L)
+      ARL2 <- 1/pnorm(-L + abs(delta.std))
+    }
+    if(sided == "two"){
+      alpha <- 2*pnorm(-L)
+      beta <- pnorm(L - delta.std)-pnorm(- L- delta.std)
+      ARL1 <- 1/alpha
+      ARL2 <- 1/(1-beta)
+    }
     tau <- (1-(1+lambda*h)*exp(-lambda*h))/(lambda*(1-exp(-lambda*h)))
     s <- 1/(exp(lambda*h)-1)
     if(!is.null(P0)&!is.null(P1)){
@@ -19,12 +26,19 @@
     stop("You should at least give a pair of value to P0,P1 or C0,C1")
     return(ECH)
   }
-  .echXbar2 <- function(x,n=5,lambda=.05,delta=2,P0=NULL,P1=NULL,C0=NULL,C1=NULL,Cr=25,Cf=50,T0=0.0167,Tc=1,Tf=0,Tr=0,a=1,b=.1,d1=1,d2=1){
+  .echXbar2 <- function(x,n=5,delta=2,lambda=.05,P0=NULL,P1=NULL,C0=NULL,C1=NULL,Cr=25,Cf=50,T0=0.0167,Tc=1,Tf=0,Tr=0,a=1,b=.1,d1=1,d2=1, sided = "two"){
     h <- x[1]; L <- x[2]
-    alpha <- 2*pnorm(-L)
-    beta <- pnorm(L-delta*sqrt(n))-pnorm(-L-delta*sqrt(n))
-    ARL1 <- 1/alpha
-    ARL2 <- 1/(1-beta)
+    delta.std <- delta*sqrt(n)
+    if(sided == "one"){
+      ARL1 <- 1/pnorm(-L)
+      ARL2 <- 1/pnorm(-L + abs(delta.std))
+    }
+    if(sided == "two"){
+      alpha <- 2*pnorm(-L)
+      beta <- pnorm(L - delta.std)-pnorm(- L- delta.std)
+      ARL1 <- 1/alpha
+      ARL2 <- 1/(1-beta)
+    }
     tau <- (1-(1+lambda*h)*exp(-lambda*h))/(lambda*(1-exp(-lambda*h)))
     s <- 1/(exp(lambda*h)-1)
     if(!is.null(P0)&!is.null(P1)){

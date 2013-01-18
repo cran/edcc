@@ -1,18 +1,19 @@
 \name{ecoXbar}
 \alias{echXbar}
 \alias{ecoXbar}
-\title{Economic design for X-bar control chart}
+\title{Economic design for the X-bar control chart}
 \usage{
-  ecoXbar(h, L, n, lambda = 0.05, delta = 2, P0 = NULL,
+  ecoXbar(h, L, n, delta = 2, lambda = 0.05, P0 = NULL,
     P1 = NULL, C0 = NULL, C1 = NULL, Cr = 25, Cf = 50,
     T0 = 0.0167, Tc = 1, Tf = 0, Tr = 0, a = 1, b = 0.1,
-    d1 = 1, d2 = 1, nlevels = 30, par = NULL,
-    contour.plot = FALSE, call.print = TRUE, ...)
+    d1 = 1, d2 = 1, nlevels = 30, sided = "two",
+    par = NULL, contour.plot = FALSE, call.print = TRUE,
+    ...)
 
-  echXbar(h, L, n, lambda = 0.05, delta = 2, P0 = NULL,
+  echXbar(h, L, n, delta = 2, lambda = 0.05, P0 = NULL,
     P1 = NULL, C0 = NULL, C1 = NULL, Cr = 25, Cf = 50,
     T0 = 0.0167, Tc = 1, Tf = 0, Tr = 0, a = 1, b = 0.1,
-    d1 = 1, d2 = 1)
+    d1 = 1, d2 = 1, sided = "two")
 }
 \arguments{
   \item{h}{sampling interval. It can be a numeric vector or
@@ -30,8 +31,8 @@
   value is 0.05.}
 
   \item{delta}{shift in process mean in standard deviation
-  units when assignable cause occurs (delta = |mu1 -
-  mu0|/sigma), where sigma is the standard deviation of
+  units when assignable cause occurs (delta = (mu1 -
+  mu0)/sigma), where sigma is the standard deviation of
   observations; mu0 is the in-control process mean; mu1 is
   the out-of-control process mean. Default value is 2.}
 
@@ -77,6 +78,12 @@
   value is 30. It works only when \code{contour.plot} is
   TRUE.}
 
+  \item{sided}{distinguish between one- and two-sided X-bar
+  chart by choosing ``one'' or ``two'' respectively.  When
+  \code{sided = ``one''}, \code{delta > 0} means the
+  control chart for detecting a positive shift, and vice
+  versa. Default is ``two''.}
+
   \item{par}{initial values for the parameters to be
   optimized over. It can be a vector of length 2 or 3. See
   'Details'}
@@ -93,7 +100,8 @@
   function.}
 }
 \value{
-  The function returns a list of elements \code{optimum},
+  The \code{ecoXbar} function returns an object of class
+  "edcc", which is a list of elements \code{optimum},
   \code{cost.frame}, \code{FAR} and \code{ATS}.
   \code{optimum} is a vector with the optimum parameters
   and the corresponding ECH value; \code{cost.frame} is a
@@ -107,12 +115,13 @@
   of an assignable cause, calculated as h*ARL2 - tau, where
   tau is the expected time of occurrence of the assignable
   cause given it occurs between the i-th and (i+1)st
-  samples
+  samples. The \code{echXbar} function returns the
+  calculated ECH value only.
 }
 \description{
   Calculate the optimum parameters, n(sample size),
   h(sampling interval) and L(number of s.d. from control
-  limits to center line) for Economic Design of X-bar
+  limits to center line) for Economic Design of the X-bar
   control chart .
 }
 \details{
@@ -144,16 +153,17 @@
   to work well.
 
   For cost parameters either {P0, P1} or {C0, C1} is
-  needed. If P0 and P1 are given, they will be used first,
-  else C0 and C1 will be used.  For economic design of
-  X-bar chart, only if the difference between P0 and P1
-  keeps the same, the results are identical. If the
-  difference between C0 and C1 keeps the same, the optimum
-  parameters are identical but the ECH(Expected Cost per
-  Hour) values will change.
+  needed.  If P0 and P1 are given, they will be used first,
+  else C0 and C1 will be used.  For economic design of the
+  X-bar chart, when \code{d1} and \code{d2} are both 1,
+  only if the difference between P0 and P1 keeps the same,
+  the results are identical. If the difference between C0
+  and C1 keeps the same, the optimum parameters are almost
+  the same but the ECH(Expected Cost per Hour) values will
+  change.
 
   \code{echXbar} is used to calculate the ECH (Expected
-  Cost per Hour) for a given design point
+  Cost per Hour) for one given design point.
 }
 \examples{
 # Douglas (2009). Statistical quality control: a modern introduction, sixth edition, p470.
@@ -180,11 +190,17 @@ contour(x,nlevels=20,lty=2,col=2,call.print=FALSE)
 update(x,P0=NULL,P1=NULL,C0=10,C1=110)
 }
 \references{
-  Douglas (2009). Statistical quality control: a modern
-  introduction, sixth edition, 463-471.
+  Weicheng Zhu, Changsoon Park (2013), {edcc: An R Package
+  for the Economic Design of the Control Chart}.
+  \emph{Journal of Statistical Software}, 52(9), 1-24.
+  \url{http://www.jstatsoft.org/v52/i09/}
+
+  Douglas (2009). \emph{Statistical quality control: a
+  modern introduction}, sixth edition, 463-471.
 
   Lorenzen and Vance (1986). The economic design of control
-  charts: a unified approach, Technometrics, 28. 3-10.
+  charts: a unified approach, \emph{Technometrics}, 28.
+  3-10.
 }
 \seealso{
   \code{\link{ecoCusum}}, \code{\link{ecoEwma}},
